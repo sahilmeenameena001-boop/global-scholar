@@ -1,9 +1,11 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { Columns2, Plus, X } from "lucide-react";
+import { Columns2, LayoutGrid, Layers, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { countries, type Country } from "@/data/countries";
+import { useMediaQuery } from "@/lib/useMediaQuery";
 import { CountryCard } from "../ui/CountryCard";
+import { CountryDeck } from "../ui/CountryDeck";
 import { ChapterHead } from "../ui/Chapter";
 import { DemoBadge } from "../ui/SectionHeading";
 
@@ -62,9 +64,16 @@ function Slot({ c, onRemove }: { c?: Country; onRemove: (id: string) => void }) 
   );
 }
 
+type View = "deck" | "grid";
+
 export function Destinations() {
   const [compare, setCompare] = useState(false);
   const [pinned, setPinned] = useState<string[]>([]);
+  // the deck is the default where a grid of five would be unreadable; wide screens
+  // get the grid, and either can be overridden from the toggle
+  const wide = useMediaQuery("(min-width: 1024px)");
+  const [chosen, setChosen] = useState<View | null>(null);
+  const view: View = chosen ?? (wide ? "grid" : "deck");
 
   // Two slots. A third pick pushes the oldest out, so the control never dead-ends.
   const toggle = (id: string) =>
@@ -79,12 +88,29 @@ export function Destinations() {
 
   const slots = [0, 1].map((i) => countries.find((c) => c.id === pinned[i]));
 
+  const compareFor = (c: Country) =>
+    compare ? { pinned: pinned.includes(c.id), toggle: () => toggle(c.id), chip: <CodeChip c={c} className="size-7" /> } : undefined;
+
   return (
     <section id="countries" data-chapter={1} className="relative scroll-mt-24 py-28 md:py-40">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <ChapterHead index="02" eyebrow="Where" title="Five countries. One of them fits you best." lede="Compare typical durations, intakes and costs across the destinations our counsellors know best." />
           <div className="flex flex-wrap items-center gap-3">
+            <div role="group" aria-label="Card layout" className="inline-flex rounded-full border border-white/15 p-1">
+              {([["deck", "Deck", Layers], ["grid", "Grid", LayoutGrid]] as const).map(([v, label, Icon]) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setChosen(v)}
+                  aria-pressed={view === v}
+                  className={`inline-flex min-h-9 items-center gap-2 rounded-full px-4 text-sm font-semibold transition-colors ${view === v ? "bg-royal text-white" : "text-ivory hover:text-royal-lit"}`}
+                >
+                  <Icon aria-hidden className="size-4" />
+                  {label}
+                </button>
+              ))}
+            </div>
             <button
               type="button"
               onClick={openCompare}
@@ -123,16 +149,15 @@ export function Destinations() {
           </AnimatePresence>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {countries.map((c, i) => (
-            <CountryCard
-              key={c.id}
-              c={c}
-              index={i}
-              compare={compare ? { pinned: pinned.includes(c.id), toggle: () => toggle(c.id), chip: <CodeChip c={c} className="size-7" /> } : undefined}
-            />
-          ))}
-        </div>
+        {view === "deck" ? (
+          <CountryDeck items={countries} compareFor={compareFor} compareOpen={compare} />
+        ) : (
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            {countries.map((c, i) => (
+              <CountryCard key={c.id} c={c} index={i} compare={compareFor(c)} />
+            ))}
+          </div>
+        )}
         <p className="mt-6 text-xs text-faint">Tuition, intake and duration figures are approximate examples for orientation only and vary by university and programme.</p>
       </div>
     </section>

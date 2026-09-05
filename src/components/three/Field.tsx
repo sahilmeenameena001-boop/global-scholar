@@ -67,7 +67,9 @@ export function Field({ count, still }: { count: number; still: boolean }) {
       const tx = store.target === 0 && wide ? 1.85 : 0;
       p.position.x = THREE.MathUtils.lerp(p.position.x, tx, k * 0.5);
 
-      p.rotation.y += d * 0.055;
+      // a deck swipe adds spin that bleeds off over roughly a second
+      store.spin *= Math.pow(0.02, d);
+      p.rotation.y += (0.055 + store.spin) * d;
       p.rotation.x = THREE.MathUtils.lerp(p.rotation.x, store.py * 0.22, k * 0.6);
     }
 

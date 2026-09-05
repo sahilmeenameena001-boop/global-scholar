@@ -45,20 +45,24 @@ function Sketch({ id, kind, colour, active, reduce }: { id: string; kind: Countr
 
 type CompareCtl = { pinned: boolean; toggle: () => void; chip: ReactNode };
 
-export function CountryCard({ c, index, compare }: { c: Country; index: number; compare?: CompareCtl }) {
+export function CountryCard({
+  c, index, compare, entrance = true,
+}: { c: Country; index: number; compare?: CompareCtl; entrance?: boolean }) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
-  const active = useInView(ref, { once: true, margin: "-80px" });
+  const inView = useInView(ref, { once: true, margin: "-80px" });
+  // inside the deck the card is mounted already visible — its parent runs the transition
+  const active = entrance ? inView : true;
   const panelId = `country-${c.id}-details`;
   const tilt = index % 2 === 0 ? -1.5 : 1.2;
 
   return (
     <motion.article
       ref={ref}
-      initial={reduce ? false : { opacity: 0, y: 30, rotate: tilt * 2 }}
+      initial={reduce || !entrance ? false : { opacity: 0, y: 30, rotate: tilt * 2 }}
       animate={active ? { opacity: 1, y: 0, rotate: reduce ? 0 : tilt } : {}}
-      transition={{ delay: index * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ delay: entrance ? index * 0.1 : 0, duration: entrance ? 0.6 : 0.3, ease: [0.22, 1, 0.36, 1] }}
       whileHover={reduce ? undefined : { rotate: 0, y: -6, scale: 1.02 }}
       onHoverStart={() => setOpen(true)} onHoverEnd={() => setOpen(false)}
       className="group flex flex-col"
