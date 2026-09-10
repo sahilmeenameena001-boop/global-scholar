@@ -33,6 +33,7 @@ async function deliver(lead: Lead) {
     email: lead.email.trim(),
     phone: lead.phone.trim(),
     time: lead.time,
+    about: lead.context || "General counselling",
     receivedAt: new Date().toISOString(),
   });
 }

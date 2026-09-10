@@ -8,9 +8,12 @@ import { Input, Select, SuccessState } from "./Field";
 /**
  * Lead capture. Validates on the client for instant feedback, then posts to
  * `/api/lead`, which re-runs the same rules server-side and owns delivery.
+ *
+ * `context` names what the enquiry is about — the scholarship a student clicked,
+ * say — and travels with the lead so whoever picks it up knows why they called.
  */
-export function LeadForm({ compact }: { compact?: boolean }) {
-  const [v, setV] = useState<Lead>(emptyLead);
+export function LeadForm({ compact, context }: { compact?: boolean; context?: string }) {
+  const [v, setV] = useState<Lead>(() => ({ ...emptyLead, context: context ?? "" }));
   const [errors, setErrors] = useState<LeadErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -66,6 +69,11 @@ export function LeadForm({ compact }: { compact?: boolean }) {
 
   return (
     <form onSubmit={submit} noValidate className="space-y-4">
+      {context && (
+        <p className="rounded-xl border border-royal-lit/25 bg-royal/10 px-4 py-3 text-sm text-mist">
+          <span className="font-semibold text-ivory">Enquiry about:</span> {context}
+        </p>
+      )}
       <fieldset disabled={sending} className="space-y-4 border-0 p-0 transition-opacity duration-200 disabled:opacity-60">
         <div className={`grid gap-4 ${compact ? "" : "sm:grid-cols-2"}`}>
           <Input id="lead-name" label="Full name" autoComplete="name" value={v.name} error={errors.name} onChange={(e) => set("name", e.target.value)} />

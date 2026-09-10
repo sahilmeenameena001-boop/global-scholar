@@ -1,6 +1,7 @@
 "use client";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { motion } from "framer-motion";
+import Link from "next/link";
 
 type Item = { label: string; href: string };
 
@@ -27,7 +28,7 @@ export function FlipList({ items }: { items: Item[] }) {
               flip: { rotateX: 0, opacity: 1, transition: { type: "spring", stiffness: 260, damping: 20 } },
             }}
           >
-            <a href={l.href} className="inline-block py-1.5 text-sm text-mist hover:text-royal-lit">{l.label}</a>
+            <Link href={l.href} className="inline-block py-1.5 text-sm text-mist hover:text-royal-lit">{l.label}</Link>
           </motion.span>
         </li>
       ))}

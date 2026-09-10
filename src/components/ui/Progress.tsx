@@ -22,14 +22,14 @@ export function Progress({ current, total, labels }: { current: number; total: n
         {/* travelled route: scaleX, never width */}
         <motion.div className="absolute inset-x-0 top-1/2 h-0.5 origin-left -translate-y-1/2 bg-royal" initial={false} animate={{ scaleX: pct / 100 }} transition={hop} />
         {Array.from({ length: total }).map((_, i) => (
-          <span key={i} className={`absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors ${i <= current ? "border-royal bg-royal" : "border-navy/30 bg-surface"}`} style={{ left: `${(i / (total - 1)) * 100}%` }} />
+          <span key={i} className={`absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors ${i <= current ? "border-royal-lit bg-royal-lit" : "border-white/25 bg-surface"}`} style={{ left: `${(i / (total - 1)) * 100}%` }} />
         ))}
         {/* the plane hops stop to stop, lifting through a small arc on the way */}
         <motion.span className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2" initial={false} animate={{ left: `${pct}%` }} transition={hop}>
           {/* keyed on `current` so the arc keyframes replay on every hop */}
           <motion.span
             key={current}
-            className="grid size-8 place-items-center rounded-full bg-navy text-white shadow-card"
+            className="grid size-8 place-items-center rounded-full bg-royal text-white shadow-card"
             animate={reduce ? { y: 0, rotate: 0 } : { y: [0, -13, 0], rotate: [0, -9, 0] }}
             transition={hop}
           >

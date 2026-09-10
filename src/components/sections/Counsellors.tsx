@@ -81,7 +81,7 @@ function CounsellorCard({ c, i, onBook }: { c: Counsellor; i: number; onBook: (c
       className="flex flex-col rounded-3xl border border-white/10 bg-surface p-6 shadow-card"
     >
       <div className="flex items-center gap-4">
-        <Avatar initials={c.initials} colour={c.colour} size="size-16" />
+        <Avatar name={c.name} colour={c.colour} size="size-16" />
         <div>
           <h3 className="font-serif text-xl text-ivory">{c.name}</h3>
           <p className="text-sm text-mist">{c.years} years&rsquo; experience</p>
@@ -122,10 +122,10 @@ export function Counsellors() {
   const [active, setActive] = useState<Counsellor | null>(null);
   const close = useCallback(() => setActive(null), []);
   return (
-    <section id="counsellors" data-chapter={5} className="relative scroll-mt-24 py-28 md:py-40">
+    <section id="counsellors" aria-labelledby="counsellors-title" data-chapter={5} className="relative scroll-mt-24 py-28 md:py-40">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <ChapterHead index="07" eyebrow="Your crew" title="The people behind every shortlist." lede="A small team that knows the destinations it advises on. Book a free session with whoever fits your plans." />
+          <ChapterHead id="counsellors-title" index="—" eyebrow="Your crew" title="The people behind every shortlist." lede="A small team that knows the destinations it advises on. Book a free session with whoever fits your plans." />
           <DemoBadge>Fictional demo profiles</DemoBadge>
         </div>
         <div className="mt-12 grid gap-6 md:grid-cols-3">

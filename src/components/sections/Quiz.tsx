@@ -3,6 +3,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, RotateCcw } from "lucide-react";
 import { useState } from "react";
+import { navByHref } from "@/data/nav";
 import { demoMatches, quizSteps } from "@/data/quiz";
 import { Button } from "../ui/Button";
 import { LeadForm } from "../ui/LeadForm";
@@ -10,6 +11,8 @@ import { MatchCard, SpringCount } from "../ui/MatchCard";
 import { Progress } from "../ui/Progress";
 import { ChapterHead } from "../ui/Chapter";
 import { DemoBadge } from "../ui/SectionHeading";
+
+const meta = navByHref["/universities"];
 
 type Answers = Record<string, string[]>;
 
@@ -41,11 +44,11 @@ export function Quiz() {
   const slide = reduce ? { initial: { opacity: 0 }, animate: { opacity: 1 } } : { initial: { opacity: 0, x: dir * 40 }, animate: { opacity: 1, x: 0 } };
 
   return (
-    <section id="quiz" data-chapter={2} className="relative scroll-mt-24 py-28 text-ivory md:py-40">
+    <section id="quiz" aria-labelledby="quiz-title" data-chapter={2} className="relative scroll-mt-24 py-28 text-ivory md:py-40">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <ChapterHead index="03" eyebrow="The match" title="Five questions between you and a shortlist." lede="Answer honestly. The result is a first illustrative shortlist that a counsellor then refines with you." />
+        <ChapterHead id="quiz-title" index={meta.index} eyebrow={meta.eyebrow} title="Five questions between you and a shortlist." lede="Answer honestly. The result is a first illustrative shortlist that a counsellor then refines with you." />
 
-        <div className="mx-auto mt-12 max-w-3xl rounded-[2rem] bg-surface p-6 text-ink shadow-lift sm:p-10">
+        <div className="mx-auto mt-12 max-w-3xl rounded-[2rem] bg-surface p-6 text-ivory shadow-lift sm:p-10">
           {!finished ? (
             <>
               <Progress current={step} total={quizSteps.length} labels={["Study area", "Qualification", "Score", "Budget", "Destinations"]} />
@@ -58,9 +61,9 @@ export function Quiz() {
                         const on = selected.includes(opt);
                         return (
                           <button key={opt} type="button" role={q.multi ? "checkbox" : "radio"} aria-checked={on} onClick={() => choose(opt)}
-                            className={`flex min-h-14 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-colors ${on ? "border-royal bg-royal/25 text-ivory" : "border-white/15 bg-surface text-ink hover:border-white/30"}`}>
+                            className={`flex min-h-14 items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition-colors ${on ? "border-royal bg-royal/25 text-ivory ring-1 ring-royal-lit/50" : "border-white/15 bg-white/[0.03] text-mist hover:border-white/30 hover:text-ivory"}`}>
                             {opt}
-                            <span aria-hidden className={`grid size-5 shrink-0 place-items-center rounded-full border ${on ? "border-royal bg-royal text-white" : "border-white/20"}`}>{on && <Check className="size-3" />}</span>
+                            <span aria-hidden className={`grid size-5 shrink-0 place-items-center rounded-full border ${on ? "border-royal-lit bg-royal-lit text-void" : "border-white/25"}`}>{on && <Check className="size-3" />}</span>
                           </button>
                         );
                       })}
@@ -89,7 +92,7 @@ export function Quiz() {
               <div className="mt-10 rounded-3xl border border-white/10 bg-raised p-6 sm:p-8">
                 <h4 className="font-serif text-2xl text-ivory">Unlock all 14 matches with a free counselling call</h4>
                 <p className="mt-2 mb-6 text-sm text-mist">A counsellor will review your full profile and confirm which universities are realistic for you.</p>
-                <LeadForm />
+                <LeadForm context="Full university shortlist from the match quiz" />
               </div>
             </motion.div>
           )}

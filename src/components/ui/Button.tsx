@@ -1,6 +1,7 @@
 "use client";
 import { ArrowRight } from "lucide-react";
-import { useRef, type ComponentProps } from "react";
+import Link from "next/link";
+import type { ComponentProps } from "react";
 import { gsap } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useFinePointer } from "./fx";
@@ -23,6 +24,7 @@ const wipe: Record<Variant, string> = {
 type Props = {
   variant?: Variant;
   arrow?: boolean;
+  /** A route ("/about"), an in-page anchor ("#quiz") or an external URL. */
   href?: string;
   magnetic?: boolean;
   className?: string;
@@ -31,11 +33,13 @@ type Props = {
 /**
  * Fill wipes up from the bottom edge, the label slides out while a duplicate
  * slides in behind it, and primary CTAs can be magnetic on fine pointers only.
+ *
+ * Route hrefs render a `next/link` so navigation is client-side and prefetched;
+ * anchors stay plain `<a>` so `SmoothAnchors` can hand them to Lenis.
  */
 export function Button({
   variant = "primary", arrow, href, magnetic = false, className = "", children, onClick, ...rest
 }: Props) {
-  const ref = useRef<HTMLElement>(null);
   const fine = useFinePointer();
   const reduce = useReducedMotion();
   const pull = magnetic && fine && !reduce;
@@ -72,17 +76,17 @@ export function Button({
   );
 
   if (href) {
-    return (
-      <a ref={ref as React.Ref<HTMLAnchorElement>} href={href} className={cls}
-        onPointerMove={onMove} onPointerLeave={onLeave}
-        onClick={onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>}>
-        {inner}
-      </a>
-    );
+    const anchor = {
+      className: cls,
+      onPointerMove: onMove,
+      onPointerLeave: onLeave,
+      onClick: onClick as unknown as React.MouseEventHandler<HTMLAnchorElement>,
+      "aria-label": rest["aria-label"],
+    };
+    return href.startsWith("/") ? <Link href={href} {...anchor}>{inner}</Link> : <a href={href} {...anchor}>{inner}</a>;
   }
   return (
-    <button ref={ref as React.Ref<HTMLButtonElement>} className={cls}
-      onPointerMove={onMove} onPointerLeave={onLeave} onClick={onClick} {...(rest as object)}>
+    <button className={cls} onPointerMove={onMove} onPointerLeave={onLeave} onClick={onClick} {...(rest as object)}>
       {inner}
     </button>
   );

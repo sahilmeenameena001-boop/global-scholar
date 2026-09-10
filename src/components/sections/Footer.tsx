@@ -1,21 +1,32 @@
 import { AtSign, Mail, MapPin, Phone, Share2, Video } from "lucide-react";
+import Link from "next/link";
 import { countries } from "@/data/countries";
+import { navLinks } from "@/data/nav";
 import { activeSocials, brand, contact } from "@/data/site";
 import { FlipList } from "../ui/FlipList";
 import { LegalLinks } from "../ui/LegalLinks";
-import { Logo } from "./Navbar";
+import { BOOK_HREF, Logo } from "./Navbar";
 
 const socialIcons = { instagram: AtSign, linkedin: Share2, youtube: Video } as const;
 
 const cols = [
-  { title: "Countries", links: countries.map((c) => ({ label: c.name, href: "#countries" })) },
-  { title: "Services", links: [{ label: "Profile evaluation", href: "#quiz" }, { label: "University applications", href: "#journey" }, { label: "Scholarship guidance", href: "#scholarships" }, { label: "Visa support", href: "#journey" }, { label: "Pre-departure briefing", href: "#journey" }] },
-  { title: "Resources", links: [{ label: "University match quiz", href: "#quiz" }, { label: "Student stories", href: "#stories" }, { label: "Meet the counsellors", href: "#counsellors" }, { label: "Book free counselling", href: "#counsellors" }] },
+  { title: "Countries", links: countries.map((c) => ({ label: c.name, href: "/countries" })) },
+  { title: "Pages", links: navLinks.map((l) => ({ label: l.label, href: l.href })) },
+  {
+    title: "Services",
+    links: [
+      { label: "Profile evaluation", href: "/universities" },
+      { label: "University applications", href: "/how-it-works" },
+      { label: "Scholarship guidance", href: "/scholarships" },
+      { label: "Visa support", href: "/how-it-works" },
+      { label: "Book free counselling", href: BOOK_HREF },
+    ],
+  },
 ];
 
 export function Footer() {
   return (
-    <footer id="about" className="scroll-mt-24 border-t border-white/10 bg-raised pt-16 pb-8">
+    <footer className="mt-auto border-t border-white/10 bg-raised pt-16 pb-8">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
@@ -48,14 +59,14 @@ export function Footer() {
                 <FlipList items={c.links} />
               ) : (
                 <ul className="mt-4 space-y-2.5">
-                  {c.links.map((l) => <li key={l.label}><a href={l.href} className="inline-block py-1.5 text-sm text-mist hover:text-royal-lit">{l.label}</a></li>)}
+                  {c.links.map((l) => <li key={l.label}><Link href={l.href} className="inline-block py-1.5 text-sm text-mist hover:text-royal-lit">{l.label}</Link></li>)}
                 </ul>
               )}
             </nav>
           ))}
         </div>
         <div className="mt-12 rounded-2xl border border-white/10 bg-surface p-5 text-xs leading-relaxed text-mist">
-          <strong className="text-ivory">Disclaimer.</strong> Global Scholars provides counselling and application guidance only. University admission, scholarships and visas are subject to eligibility and to decisions by the relevant institutions and authorities. Country, tuition, scholarship, student and counsellor information on this page is illustrative demo content and must be verified before relying on it.
+          <strong className="text-ivory">Disclaimer.</strong> Global Scholars provides counselling and application guidance only. University admission, scholarships and visas are subject to eligibility and to decisions by the relevant institutions and authorities. Country, tuition, scholarship, student and counsellor information on this site is illustrative demo content and must be verified before relying on it.
         </div>
         <div className="mt-8 flex flex-col gap-3 text-xs text-mist sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} {brand.name}. Fictional consultancy for demonstration.</p>

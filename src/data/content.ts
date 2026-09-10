@@ -38,32 +38,23 @@ export const scholarshipFilters = {
 };
 
 export type Story = {
-  name: string; initials: string; city: string; destination: string; university: string; course: string; scholarship: string; quote: string; colour: string;
+  name: string; city: string; destination: string; university: string; course: string; scholarship: string; quote: string; colour: string;
 };
 
 /** Fictional demo stories in development. Replace with consented, verified student stories. */
 export const stories: Story[] = [
-  { name: "Aarav Mehta", initials: "AM", city: "Pune, India", destination: "Manchester, UK", university: "Northbridge University", course: "MSc Business Analytics", scholarship: "25% merit award", quote: "The shortlist was honest about my chances, which is exactly what I needed to decide with confidence.", colour: "#2457F5" },
-  { name: "Sofia Nakamura", initials: "SN", city: "Colombo, Sri Lanka", destination: "Toronto, Canada", university: "Lakeshore Institute of Technology", course: "MEng Software Systems", scholarship: "Entrance award", quote: "From statement drafts to the visa interview, every step had a checklist and a person I could call.", colour: "#F06B5D" },
-  { name: "Daniel Okafor", initials: "DO", city: "Lagos, Nigeria", destination: "Sydney, Australia", university: "Coastal Pacific University", course: "Master of Information Technology", scholarship: "Partial fee waiver", quote: "I nearly picked the wrong intake. The team caught it early and saved me six months.", colour: "#0B1F3A" },
+  { name: "Aarav Mehta", city: "Pune, India", destination: "Manchester, UK", university: "Northbridge University", course: "MSc Business Analytics", scholarship: "25% merit award", quote: "The shortlist was honest about my chances, which is exactly what I needed to decide with confidence.", colour: "#2457F5" },
+  { name: "Sofia Nakamura", city: "Colombo, Sri Lanka", destination: "Toronto, Canada", university: "Lakeshore Institute of Technology", course: "MEng Software Systems", scholarship: "Entrance award", quote: "From statement drafts to the visa interview, every step had a checklist and a person I could call.", colour: "#F06B5D" },
+  { name: "Daniel Okafor", city: "Lagos, Nigeria", destination: "Sydney, Australia", university: "Coastal Pacific University", course: "Master of Information Technology", scholarship: "Partial fee waiver", quote: "I nearly picked the wrong intake. The team caught it early and saved me six months.", colour: "#0B1F3A" },
 ];
 
 export type Counsellor = {
-  name: string; initials: string; countries: string[]; expertise: string[]; languages: string[]; years: number; colour: string;
+  name: string; countries: string[]; expertise: string[]; languages: string[]; years: number; colour: string;
 };
 
 /** Fictional counsellor profiles for demo purposes. */
 export const counsellors: Counsellor[] = [
-  { name: "Priya Raman", initials: "PR", countries: ["United Kingdom", "Ireland"], expertise: ["Postgraduate business", "Personal statements"], languages: ["English", "Hindi", "Tamil"], years: 9, colour: "#2457F5" },
-  { name: "Marcus Lindqvist", initials: "ML", countries: ["Canada", "United States"], expertise: ["STEM admissions", "Scholarship strategy"], languages: ["English", "Swedish"], years: 12, colour: "#F06B5D" },
-  { name: "Hana Yusuf", initials: "HY", countries: ["Australia", "Germany"], expertise: ["Visa preparation", "Health & engineering programmes"], languages: ["English", "Arabic", "German"], years: 7, colour: "#0B1F3A" },
-];
-
-export const navLinks = [
-  { label: "Countries", href: "#countries" },
-  { label: "Universities", href: "#quiz" },
-  { label: "Scholarships", href: "#scholarships" },
-  { label: "How It Works", href: "#journey" },
-  { label: "Student Stories", href: "#stories" },
-  { label: "About", href: "#about" },
+  { name: "Priya Raman", countries: ["United Kingdom", "Ireland"], expertise: ["Postgraduate business", "Personal statements"], languages: ["English", "Hindi", "Tamil"], years: 9, colour: "#2457F5" },
+  { name: "Marcus Lindqvist", countries: ["Canada", "United States"], expertise: ["STEM admissions", "Scholarship strategy"], languages: ["English", "Swedish"], years: 12, colour: "#F06B5D" },
+  { name: "Hana Yusuf", countries: ["Australia", "Germany"], expertise: ["Visa preparation", "Health & engineering programmes"], languages: ["English", "Arabic", "German"], years: 7, colour: "#0B1F3A" },
 ];

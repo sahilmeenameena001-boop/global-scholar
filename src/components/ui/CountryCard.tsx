@@ -2,46 +2,11 @@
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { motion, useInView } from "framer-motion";
 import { ArrowUpRight, Calendar, ChevronDown, Clock, Coins, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { type ReactNode, useRef, useState } from "react";
 import type { Country } from "@/data/countries";
+import { CountryArt } from "./CountryArt";
 import { StampIn, Tilt } from "./fx";
-
-/* Landmark outlines drawn stroke-by-stroke like a pen sketch. */
-const SKETCH: Record<Country["landmark"], string[]> = {
-  bigben: ["M40 130 h90", "M70 130 v-90 h20 v90", "M70 40 L80 20 L90 40", "M74 55 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0", "M80 55 v-4 M80 55 h3", "M40 130 v-38 h30 M130 130 v-38 h-40", "M46 100 h18 M46 110 h18 M96 100 h18 M96 110 h18"],
-  cntower: ["M30 130 h100", "M80 130 v-110", "M62 62 a18 8 0 1 0 36 0 a18 8 0 1 0 -36 0", "M74 70 v60 M86 70 v60", "M66 100 a14 5 0 1 0 28 0", "M80 20 l-3 -8 M80 20 l3 -8"],
-  opera: ["M10 130 h140", "M20 128 Q60 30 100 128", "M60 128 Q100 40 140 128", "M95 128 Q130 70 158 128", "M35 128 Q60 70 82 128", "M28 118 h100"],
-  liberty: ["M50 130 h60", "M55 130 v-12 h50 v12", "M70 118 v-58 h20 v58", "M80 50 a10 10 0 1 0 0.1 0", "M70 42 l4 -10 4 10 4 -10 4 10", "M90 68 L100 30 l3 -6 M96 24 h8", "M60 80 l10 -8 M72 100 h16"],
-  gate: ["M20 130 h120", "M30 60 h100 v-10 h-100 z", "M35 60 v70 M45 60 v70 M60 60 v70 M70 60 v70 M85 60 v70 M95 60 v70 M110 60 v70 M120 60 v70", "M60 50 L80 30 L100 50", "M72 40 h16", "M74 36 l6 -6 6 6"],
-};
-
-function Sketch({ id, kind, colour, active, reduce }: { id: string; kind: Country["landmark"]; colour: string; active: boolean; reduce: boolean }) {
-  const paths = SKETCH[kind];
-  const fid = `rough-${id}`;
-  return (
-    <svg aria-hidden viewBox="0 0 160 140" className="h-28 w-full">
-      <defs>
-        <filter id={fid} x="-5%" y="-5%" width="110%" height="110%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="3" result="n" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="1.6" />
-        </filter>
-      </defs>
-      <g filter={`url(#${fid})`} fill="none" stroke={colour} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        {paths.map((d, i) => (
-          <motion.path key={d} d={d} initial={reduce ? false : { pathLength: 0, opacity: 0 }} animate={active ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 0.55, delay: 0.15 + i * 0.18, ease: "easeInOut" }} />
-        ))}
-      </g>
-      {/* colour wash after the outline */}
-      <motion.g fill={colour} initial={reduce ? false : { opacity: 0 }} animate={active ? { opacity: 0.16 } : {}} transition={{ delay: 0.3 + paths.length * 0.18, duration: 0.6 }}>
-        {kind === "bigben" && <><rect x="70" y="40" width="20" height="90" /><rect x="40" y="92" width="90" height="38" /></>}
-        {kind === "cntower" && <><ellipse cx="80" cy="62" rx="18" ry="8" /><rect x="74" y="70" width="12" height="60" /></>}
-        {kind === "opera" && <><path d="M20 128 Q60 30 100 128Z" /><path d="M60 128 Q100 40 140 128Z" /></>}
-        {kind === "liberty" && <><rect x="70" y="60" width="20" height="58" /><circle cx="80" cy="50" r="10" /></>}
-        {kind === "gate" && <><rect x="30" y="50" width="100" height="10" /><path d="M60 50 L80 30 L100 50Z" /></>}
-      </motion.g>
-    </svg>
-  );
-}
 
 type CompareCtl = { pinned: boolean; toggle: () => void; chip: ReactNode };
 
@@ -68,12 +33,12 @@ export function CountryCard({
       className="group flex flex-col"
     >
       <Tilt max={6} className={`flex flex-1 flex-col overflow-hidden rounded-2xl border bg-surface shadow-card transition-shadow hover:shadow-lift ${compare?.pinned ? "border-royal ring-2 ring-royal/35" : "border-white/10"}`}>
-      <div className="paper relative px-5 pt-7">
+      <div className="relative">
+        <CountryArt c={c} active={active} className="h-36" />
         <span aria-hidden className="absolute -top-1 left-1/2 h-5 w-20 -translate-x-1/2 rotate-[-4deg] bg-coral/40 shadow-sm [mask-image:repeating-linear-gradient(90deg,black_0_6px,rgba(0,0,0,0.7)_6px_8px)]" />
-        <StampIn delay={0.5 + index * 0.1} className="absolute right-3 top-3"><span className="block rounded-sm border-2 border-white/30 px-1.5 py-0.5 font-serif text-[10px] font-bold uppercase tracking-widest text-ivory">{c.code}</span></StampIn>
-        <Sketch id={c.id} kind={c.landmark} colour={c.accent} active={active} reduce={reduce} />
-        <p className="pb-2 text-right font-[family-name:var(--font-hand)] text-lg leading-none text-ivory/70" style={{ transform: "rotate(-2deg)" }}>
-          sketch no. {String(index + 1).padStart(2, "0")}
+        <StampIn delay={0.5 + index * 0.1} className="absolute right-3 top-3"><span className="block rounded-sm border-2 border-white/40 bg-void/40 px-1.5 py-0.5 font-serif text-[10px] font-bold uppercase tracking-widest text-ivory backdrop-blur-sm">{c.code}</span></StampIn>
+        <p className="absolute bottom-1.5 right-3 font-[family-name:var(--font-hand)] text-lg leading-none text-ivory/80" style={{ transform: "rotate(-2deg)" }}>
+          plate no. {String(index + 1).padStart(2, "0")}
         </p>
       </div>
       <div className="flex flex-1 flex-col p-6">
@@ -108,9 +73,9 @@ export function CountryCard({
           </button>
         )}
 
-        <a href="#quiz" className="mt-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/15 px-5 text-sm font-semibold text-ivory transition-colors group-hover:border-royal group-hover:bg-royal group-hover:text-white">
-          Explore {c.name} <ArrowUpRight aria-hidden className="size-4" />
-        </a>
+        <Link href="/universities" className="mt-4 inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full border border-white/15 px-5 text-sm font-semibold text-ivory transition-colors group-hover:border-royal group-hover:bg-royal group-hover:text-white">
+          Match me with {c.name} universities <ArrowUpRight aria-hidden className="size-4" />
+        </Link>
       </div>
       </Tilt>
     </motion.article>

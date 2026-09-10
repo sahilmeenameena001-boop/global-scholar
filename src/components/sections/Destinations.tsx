@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Columns2, LayoutGrid, Layers, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { countries, type Country } from "@/data/countries";
+import { navByHref } from "@/data/nav";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { CountryCard } from "../ui/CountryCard";
 import { CountryDeck } from "../ui/CountryDeck";
@@ -10,6 +11,7 @@ import { ChapterHead } from "../ui/Chapter";
 import { DemoBadge } from "../ui/SectionHeading";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
+const meta = navByHref["/countries"];
 const SPEC: { label: string; get: (c: Country) => string }[] = [
   { label: "Typical duration", get: (c) => c.duration },
   { label: "Popular intake", get: (c) => c.intake },
@@ -37,7 +39,7 @@ function Slot({ c, onRemove }: { c?: Country; onRemove: (id: string) => void }) 
     return (
       <motion.div layout className="flex min-h-[13rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 p-6 text-center">
         <Plus aria-hidden className="size-5 text-ivory/35" />
-        <p className="text-sm text-ink/55">Choose a destination below to fill this slot.</p>
+        <p className="text-sm text-mist">Choose a destination below to fill this slot.</p>
       </motion.div>
     );
   }
@@ -55,7 +57,7 @@ function Slot({ c, onRemove }: { c?: Country; onRemove: (id: string) => void }) 
       <dl className="mt-4 space-y-2.5 text-sm">
         {SPEC.map((row) => (
           <div key={row.label}>
-            <dt className="text-xs font-semibold uppercase tracking-wider text-ink/45">{row.label}</dt>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-faint">{row.label}</dt>
             <dd className="mt-0.5 text-mist">{row.get(c)}</dd>
           </div>
         ))}
@@ -92,10 +94,10 @@ export function Destinations() {
     compare ? { pinned: pinned.includes(c.id), toggle: () => toggle(c.id), chip: <CodeChip c={c} className="size-7" /> } : undefined;
 
   return (
-    <section id="countries" data-chapter={1} className="relative scroll-mt-24 py-28 md:py-40">
+    <section id="countries" aria-labelledby="countries-title" data-chapter={1} className="relative scroll-mt-24 py-28 md:py-40">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <ChapterHead index="02" eyebrow="Where" title="Five countries. One of them fits you best." lede="Compare typical durations, intakes and costs across the destinations our counsellors know best." />
+          <ChapterHead id="countries-title" index={meta.index} eyebrow={meta.eyebrow} title="Five countries. One of them fits you best." lede="Compare typical durations, intakes and costs across the destinations our counsellors know best." />
           <div className="flex flex-wrap items-center gap-3">
             <div role="group" aria-label="Card layout" className="inline-flex rounded-full border border-white/15 p-1">
               {([["deck", "Deck", Layers], ["grid", "Grid", LayoutGrid]] as const).map(([v, label, Icon]) => (

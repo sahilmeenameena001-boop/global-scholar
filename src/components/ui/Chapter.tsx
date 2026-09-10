@@ -21,8 +21,8 @@ export function Chapter({
 
 /** Asymmetric chapter opener: hung index in the margin, headline on the grid. */
 export function ChapterHead({
-  index, eyebrow, title, lede, className = "",
-}: { index: string; eyebrow: string; title: string; lede?: string; className?: string }) {
+  index, eyebrow, title, lede, className = "", id,
+}: { index: string; eyebrow: string; title: string; lede?: string; className?: string; id?: string }) {
   return (
     <header className={`grid gap-x-8 gap-y-6 md:grid-cols-12 ${className}`}>
       <div className="flex items-start gap-4 md:col-span-3">
@@ -31,7 +31,7 @@ export function ChapterHead({
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-faint">{eyebrow}</p>
       </div>
       <div className="md:col-span-8 md:col-start-5">
-        <Headline as="h2" className="text-[clamp(2rem,4.6vw,3.75rem)] leading-[1.02] text-ivory">
+        <Headline as="h2" id={id} className="text-[clamp(2rem,4.6vw,3.75rem)] leading-[1.02] text-ivory">
           {title}
         </Headline>
         {lede && <p className="mt-6 max-w-[62ch] text-lg leading-relaxed text-mist">{lede}</p>}

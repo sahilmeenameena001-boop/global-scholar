@@ -1,11 +1,7 @@
 "use client";
+import { anchorTop, getLenis } from "@/lib/lenis";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useEffect } from "react";
-
-const OFFSET = 88;
-
-type LenisLike = { scrollTo: (t: number, o?: { offset?: number; duration?: number }) => void };
-const getLenis = () => (window as unknown as { __lenis?: LenisLike }).__lenis;
 
 /** Anchor navigation routed through Lenis when it is running, so the chapter rail eases to each stop. */
 export function SmoothAnchors() {
@@ -28,7 +24,7 @@ export function SmoothAnchors() {
         history.replaceState(null, "", hash);
       };
 
-      const top = hash === "#top" ? 0 : target.getBoundingClientRect().top + window.scrollY - OFFSET;
+      const top = hash === "#top" ? 0 : anchorTop(target);
       const lenis = getLenis();
 
       if (reduce) {

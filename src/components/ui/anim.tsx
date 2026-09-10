@@ -12,8 +12,8 @@ type Tag = "h1" | "h2" | "h3" | "p" | "div";
  * and SplitText's aria handling keeps the original string readable to screen readers.
  */
 export function Headline({
-  children, as: Tag = "h2", className = "", delay = 0, onLoad = false,
-}: { children: string; as?: Tag; className?: string; delay?: number; onLoad?: boolean }) {
+  children, as: Tag = "h2", className = "", delay = 0, onLoad = false, id,
+}: { children: string; as?: Tag; className?: string; delay?: number; onLoad?: boolean; id?: string }) {
   const ref = useRef<HTMLElement>(null);
   const fonts = useFontsReady();
   const reduce = useReducedMotion();
@@ -28,8 +28,10 @@ export function Headline({
 
     const split = SplitText.create(el, { type: "lines", mask: "lines", autoSplit: true, aria: "auto" });
     gsap.set(el, { autoAlpha: 1 });
-    const tween = gsap.from(split.lines, {
-      yPercent: 110,
+    // fromTo, never from: an effect that re-runs would otherwise record the
+    // already-hidden element as the tween's destination and reveal nothing
+    const tween = gsap.fromTo(split.lines, { yPercent: 110 }, {
+      yPercent: 0,
       duration: TIER.display.duration,
       ease: TIER.display.ease,
       stagger: TIER.display.stagger,
@@ -40,7 +42,7 @@ export function Headline({
   }, { scope: ref, dependencies: [fonts, reduce, delay, onLoad] });
 
   return (
-    <Tag ref={ref as never} className={className}>
+    <Tag ref={ref as never} id={id} className={className}>
       {children}
     </Tag>
   );
@@ -59,8 +61,8 @@ export function Reveal({
     const kids = Array.from(el.children);
     if (!kids.length) return;
     if (reduce) { gsap.set(kids, { opacity: 1, y: 0 }); return; }
-    gsap.from(kids, {
-      opacity: 0, y, duration: TIER.standard.duration, ease: TIER.standard.ease,
+    gsap.fromTo(kids, { opacity: 0, y }, {
+      opacity: 1, y: 0, duration: TIER.standard.duration, ease: TIER.standard.ease,
       stagger: Math.min(stagger, 0.08),
       scrollTrigger: { trigger: el, start, once: true },
     });

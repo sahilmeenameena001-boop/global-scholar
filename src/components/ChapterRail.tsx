@@ -1,46 +1,41 @@
 "use client";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { useActiveSection } from "@/lib/useActiveSection";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { railStops } from "@/data/nav";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { useFinePointer } from "./ui/fx";
 
-export const STOPS = [
-  { id: "top", label: "Departure" },
-  { id: "countries", label: "Where" },
-  { id: "quiz", label: "Match" },
-  { id: "journey", label: "Route" },
-  { id: "scholarships", label: "Funding" },
-  { id: "stories", label: "Arrivals" },
-  { id: "counsellors", label: "Crew" },
-  { id: "boarding", label: "Board" },
-];
-
-/** Ruler-style chapter index: bar length marks the stop, the marker rides the scroll. */
+/**
+ * Ruler-style site index: one mark per page, the bar length marks the stop you
+ * are on and the gradient rides the scroll of the current page. Pointer-only —
+ * touch devices get the header menu instead.
+ */
 export function ChapterRail() {
   const fine = useFinePointer();
   const reduce = useReducedMotion();
-  const active = useActiveSection(STOPS.map((s) => s.id), "top");
+  const pathname = usePathname();
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, restDelta: 0.001 });
 
   if (!fine) return null;
 
   return (
-    <nav aria-label="Chapters" className="fixed right-6 top-1/2 z-40 hidden -translate-y-1/2 xl:block">
+    <nav aria-label="Chapters" className="fixed right-6 top-1/2 z-40 hidden -translate-y-1/2 2xl:block">
       <ul className="flex flex-col items-end gap-4">
-        {STOPS.map((s) => {
-          const on = active === s.id;
+        {railStops.map((s) => {
+          const on = pathname === s.href;
           return (
-            <li key={s.id} className="group relative flex items-center justify-end gap-3">
+            <li key={s.href} className="group relative flex items-center justify-end gap-3">
               <span
                 aria-hidden
                 className={`pointer-events-none whitespace-nowrap text-[10px] font-semibold uppercase tracking-[0.22em] transition-all duration-300 ${on ? "opacity-100 text-ivory" : "translate-x-1 opacity-0 text-faint group-hover:translate-x-0 group-hover:opacity-100"}`}
               >
-                {s.label}
+                {s.rail}
               </span>
-              <a
-                href={`#${s.id}`}
-                aria-current={on ? "true" : undefined}
+              <Link
+                href={s.href}
+                aria-current={on ? "page" : undefined}
                 aria-label={`Go to ${s.label}`}
                 className="relative flex h-6 items-center"
               >
@@ -55,7 +50,7 @@ export function ChapterRail() {
                     transition={{ type: "spring", stiffness: 400, damping: 34 }}
                   />
                 )}
-              </a>
+              </Link>
             </li>
           );
         })}

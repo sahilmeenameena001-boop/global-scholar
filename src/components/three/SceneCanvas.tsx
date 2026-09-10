@@ -1,6 +1,7 @@
 "use client";
 import { useGSAP } from "@gsap/react";
 import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import { useRef, useSyncExternalStore } from "react";
 import { ScrollTrigger } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -36,10 +37,13 @@ const noSubscribe = () => () => {};
 export function SceneCanvas() {
   const reduce = useReducedMotion();
   const caps = useSyncExternalStore(noSubscribe, getCaps, () => null);
+  const pathname = usePathname();
   const root = useRef<HTMLDivElement>(null);
 
-  // scroll + pointer feed the mutable store
+  // scroll + pointer feed the mutable store; `[data-chapter]` markers belong to
+  // the mounted page, so the triggers are torn down and rebuilt on navigation
   useGSAP(() => {
+    store.target = 0;
     const page = ScrollTrigger.create({
       trigger: document.documentElement,
       start: "top top",
@@ -70,7 +74,7 @@ export function SceneCanvas() {
       triggers.forEach((t) => t.kill());
       window.removeEventListener("pointermove", move);
     };
-  }, { scope: root });
+  }, { scope: root, dependencies: [pathname], revertOnUpdate: true });
 
   return (
     <div ref={root} aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-void">

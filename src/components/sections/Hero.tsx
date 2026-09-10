@@ -7,6 +7,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { Headline } from "../ui/anim";
 import { Button } from "../ui/Button";
 import { Ticker } from "../ui/Ticker";
+import { BOOK_HREF } from "./Navbar";
 
 const CITIES = ["London", "Toronto", "Sydney", "New York", "Berlin", "Manchester", "Vancouver", "Melbourne", "Boston", "Munich", "Dublin", "Brisbane", "Chicago", "Edinburgh", "Montréal"];
 
@@ -22,17 +23,19 @@ export function Hero() {
 
   useGSAP(() => {
     if (reduce) return;
+    // fromTo throughout: a re-run of this effect must not treat the hidden
+    // opening state as the destination (see `Reveal` in ui/anim.tsx)
     const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-    tl.from(".hero-index > *", { opacity: 0, y: 14, duration: 0.7, stagger: 0.08 }, 0.1)
-      .from(".hero-lede", { opacity: 0, y: 22, duration: 0.9 }, 0.95)
-      .from(".hero-cta > *", { opacity: 0, y: 22, duration: 0.8, stagger: 0.09 }, 1.1)
-      .from(".hero-trust li", { opacity: 0, y: 16, duration: 0.7, stagger: 0.07 }, 1.3)
-      .from(".hero-foot", { opacity: 0, y: 20, duration: 0.9 }, 1.45)
-      .from(".hero-cue", { opacity: 0, duration: 0.6 }, 1.7);
+    tl.fromTo(".hero-index > *", { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08 }, 0.1)
+      .fromTo(".hero-lede", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.9 }, 0.95)
+      .fromTo(".hero-cta > *", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.8, stagger: 0.09 }, 1.1)
+      .fromTo(".hero-trust li", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.07 }, 1.3)
+      .fromTo(".hero-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.9 }, 1.45)
+      .fromTo(".hero-cue", { opacity: 0 }, { opacity: 1, duration: 0.6 }, 1.7);
   }, { scope: root, dependencies: [reduce] });
 
   return (
-    <section ref={root} id="top" data-chapter={0} className="relative flex min-h-[100svh] flex-col justify-center px-5 pb-10 pt-32 sm:px-8">
+    <section ref={root} id="top" aria-labelledby="hero-title" data-chapter={0} className="relative flex min-h-[100svh] flex-col justify-center px-5 pb-10 pt-32 sm:px-8">
       <div className="mx-auto w-full max-w-7xl">
         <div className="hero-index mb-10 flex items-center gap-5 text-[11px] font-semibold uppercase tracking-[0.3em] text-faint">
           <span className="text-royal-lit">01</span>
@@ -40,7 +43,7 @@ export function Hero() {
           <span>Departure</span>
         </div>
 
-        <h1 className="over-canvas max-w-[16ch] font-serif text-[clamp(2.75rem,8.6vw,7.5rem)] font-normal leading-[0.92] tracking-[-0.035em] text-ivory">
+        <h1 id="hero-title" className="over-canvas max-w-[16ch] font-serif text-[clamp(2.75rem,8.6vw,7.5rem)] font-normal leading-[0.92] tracking-[-0.035em] text-ivory">
           <Headline as="div" onLoad delay={0.2}>Your ambition has</Headline>
           <span className="relative inline-block text-royal-lit">
             <Headline as="div" onLoad delay={0.42}>no borders.</Headline>
@@ -58,8 +61,8 @@ export function Hero() {
           </p>
           <div className="md:col-span-5 md:col-start-8">
             <div className="hero-cta flex flex-col gap-3 sm:flex-row md:justify-end">
-              <Button href="#quiz" magnetic arrow>Find my best country</Button>
-              <Button href="#counsellors" variant="secondary">Book free counselling</Button>
+              <Button href="/countries" magnetic arrow>Find my best country</Button>
+              <Button href={BOOK_HREF} variant="secondary">Book free counselling</Button>
             </div>
             <ul className="hero-trust mt-8 space-y-2.5 text-sm text-mist md:text-right">
               {TRUST.map(({ Icon, label }) => (

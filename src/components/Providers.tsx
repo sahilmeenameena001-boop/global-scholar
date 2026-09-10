@@ -1,5 +1,6 @@
 "use client";
 import { MotionConfig } from "framer-motion";
+import { RouteScroll } from "./RouteScroll";
 import { SmoothAnchors } from "./SmoothAnchors";
 import { SmoothScroll } from "./SmoothScroll";
 import { SceneCanvas } from "./three/SceneCanvas";
@@ -11,6 +12,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <SmoothScroll>
         <PageProgress />
         <SmoothAnchors />
+        <RouteScroll />
         <SceneCanvas />
         {children}
       </SmoothScroll>

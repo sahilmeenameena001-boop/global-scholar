@@ -1,18 +1,26 @@
 "use client";
 import { motion } from "framer-motion";
-import { Award, CalendarDays, MapPin } from "lucide-react";
+import { Award, CalendarDays, MapPin, MessageSquare } from "lucide-react";
 import { useState } from "react";
 import type { Scholarship } from "@/data/content";
 
 const statusCls: Record<Scholarship["status"], string> = {
-  Open: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Closing soon": "bg-amber-50 text-amber-700 border-amber-200",
-  Closed: "bg-white/5 text-mist border-white/10",
+  Open: "border-emerald-400/40 bg-emerald-400/10 text-emerald-300",
+  "Closing soon": "border-amber-400/40 bg-amber-400/10 text-amber-300",
+  Closed: "border-white/10 bg-white/5 text-faint",
 };
 
-export function ScholarshipCard({ s }: { s: Scholarship }) {
+/**
+ * A single award. The card's job is to end in a conversation: eligibility here
+ * is a summary of the provider's published criteria, and only a counsellor can
+ * tell a student whether their own profile actually clears it — so every card
+ * carries an enquiry CTA, including closed ones, where the next round is the
+ * thing worth asking about.
+ */
+export function ScholarshipCard({ s, onEnquire }: { s: Scholarship; onEnquire: (s: Scholarship) => void }) {
   const [open, setOpen] = useState(false);
   const id = `sch-${s.id}-details`;
+  const closed = s.status === "Closed";
   return (
     <motion.article
       layout
@@ -37,9 +45,20 @@ export function ScholarshipCard({ s }: { s: Scholarship }) {
         <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-faint">Eligibility summary</p>
         {s.eligibility}
       </div>
-      <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="mt-auto flex min-h-11 items-center pt-3 text-left text-sm font-semibold text-royal-lit hover:underline">
-        {open ? "Hide details" : "View details"}
-      </button>
+      <div className="mt-auto pt-4">
+        <button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)} className="flex min-h-11 items-center text-left text-sm font-semibold text-royal-lit hover:underline">
+          {open ? "Hide details" : "View details"}
+        </button>
+        <button
+          type="button"
+          onClick={() => onEnquire(s)}
+          className="mt-1 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-royal px-5 text-sm font-semibold text-white transition-colors hover:bg-royal-lit"
+        >
+          <MessageSquare aria-hidden className="size-4" />
+          {closed ? "Ask about the next round" : "Check if I am eligible"}
+          <span className="sr-only"> — {s.name}</span>
+        </button>
+      </div>
     </motion.article>
   );
 }
