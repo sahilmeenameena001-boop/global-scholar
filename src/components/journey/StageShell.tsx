@@ -1,30 +1,26 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { shellCopy, stageById } from "@/data/journey/config";
 import { profileMeta, track } from "@/lib/journey/analytics";
 import { answerLabels } from "@/lib/journey/explore";
 import { journey, useJourney } from "@/lib/journey/store";
 import type { Stage } from "@/lib/journey/types";
-import { stageWorld } from "@/lib/journey/worlds";
 import { Button } from "../ui/Button";
 import { LeadForm } from "../ui/LeadForm";
 import { Modal } from "../ui/Modal";
-import { ThoughtPanel } from "./HeadWindow";
+import { Aside, Eyebrow, JourneyControls, JourneyHead } from "./Frame";
 import { JourneyProgress } from "./JourneyProgress";
-import { useGoToStage } from "./useGoToStage";
 
 /**
  * Entry screen for a stage whose step-by-step flow ships in a later
- * milestone, over the stage's own background. The thought panel shows the
- * stage's world, and both CTAs lead somewhere real: an honest note about what
- * is coming and a counsellor who can do it now.
+ * milestone. The head already behaves like the stage — shortlisting snaps,
+ * applying runs its pipeline, an offer settles — and both CTAs lead somewhere
+ * real: an honest note about what is coming and a counsellor who can do it now.
  */
-export function StageShell({ stage }: { stage: Exclude<Stage, "exploring"> }) {
+export function StageShell({ stage, onStage }: { stage: Exclude<Stage, "exploring">; onStage: (s: Stage, source: string) => void }) {
   const cfg = stageById[stage];
-  const { go: onStage } = useGoToStage(stage);
-  const world = useMemo(() => stageWorld(stage), [stage]);
   const { profile } = useJourney();
   const [chosen, setChosen] = useState<string | null>(null);
   const [talk, setTalk] = useState(false);
@@ -41,26 +37,22 @@ export function StageShell({ stage }: { stage: Exclude<Stage, "exploring"> }) {
 
   return (
     <>
-      <div className="lg:col-span-6 lg:row-start-1 lg:self-end">
+      <JourneyHead>
         <JourneyProgress current={stage} />
-        <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.28em] text-sky/80">{cfg.arc} · {cfg.mood}</p>
-      </div>
+      </JourneyHead>
 
-      <div className="lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1 lg:self-center">
-        <ThoughtPanel world={world} />
-      </div>
-
-      <div className="lg:col-span-6 lg:row-start-2 lg:self-start">
-        <h2 id="journey-title" className="text-[clamp(1.85rem,5.6vw,3rem)] leading-[1.02] text-ivory">{cfg.title}</h2>
-        <p className="mt-2 font-hand text-xl leading-tight text-sky/80">{cfg.lede}</p>
+      <JourneyControls>
+        <Eyebrow>{cfg.arc} · {cfg.mood}</Eyebrow>
+        <h1 id="journey-title" className="over-canvas mt-3 text-[clamp(1.85rem,5.6vw,3rem)] leading-[1.02] text-ivory">{cfg.title}</h1>
+        <Aside>{cfg.lede}</Aside>
 
         {carried.length > 0 && (
-          <p className="mt-4 text-sm text-ivory/85">
-            <span className="text-ivory/60">{shellCopy.carry}: </span>{carried.join(" · ")}
+          <p className="mt-4 text-sm text-mist">
+            <span className="text-faint">{shellCopy.carry}: </span>{carried.join(" · ")}
           </p>
         )}
 
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+        <div className="mt-7 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
           <Button type="button" magnetic arrow aria-expanded={chosen === cfg.primary} onClick={() => pick("primary")}>{cfg.primary}</Button>
           <Button type="button" variant="secondary" aria-expanded={chosen === cfg.secondary} onClick={() => pick("secondary")}>{cfg.secondary}</Button>
         </div>
@@ -97,7 +89,7 @@ export function StageShell({ stage }: { stage: Exclude<Stage, "exploring"> }) {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </JourneyControls>
 
       <Modal open={talk} onClose={closeTalk} title={shellCopy.modal} gate>
         <LeadForm compact context={`${cfg.enquiry}${chosen ? ` (${chosen})` : ""}`} />

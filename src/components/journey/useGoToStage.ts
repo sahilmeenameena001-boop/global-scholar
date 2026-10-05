@@ -5,8 +5,8 @@ import { profileMeta, track } from "@/lib/journey/analytics";
 import { journey } from "@/lib/journey/store";
 import type { Stage } from "@/lib/journey/types";
 
-/** Every stage is its own full-screen page. */
-export const stageHref = (s: Stage) => `/journey/${s}`;
+/** Exploring lives in the home-page film; every other stage has its own route. */
+export const stageHref = (s: Stage) => (s === "exploring" ? "/?explore=1" : `/journey/${s}`);
 
 /**
  * Moves the student into a journey stage: records the choice, fires the

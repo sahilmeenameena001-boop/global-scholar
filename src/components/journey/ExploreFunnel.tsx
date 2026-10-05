@@ -1,20 +1,26 @@
 "use client";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowLeft, Pencil, RotateCcw } from "lucide-react";
+import { ArrowLeft, Pencil, RotateCcw, X } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
-  DECIDE, MAX_PRIORITIES, disciplines, exploringCopy as copy, intakes, priorities,
+  DECIDE, MAX_PRIORITIES, disciplines, exploringCopy as copy, intakes, priorities, stageById,
 } from "@/data/journey/config";
 import { destinations } from "@/data/journey/destinations";
 import { profileMeta, track } from "@/lib/journey/analytics";
 import { revealFormula } from "@/lib/journey/explore";
 import { journey } from "@/lib/journey/store";
 import type { DestinationId, DisciplineId, ExploringStep, PriorityId, UserProfile } from "@/lib/journey/types";
-import type { Preview } from "@/lib/journey/worlds";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { Button } from "../ui/Button";
 import { DemoBadge } from "../ui/SectionHeading";
 import { FloatingCTA } from "./FloatingCTA";
+
+/** What is being hovered or focused, so the head can preview it before it is chosen. */
+export type Preview =
+  | { kind: "discipline"; id: DisciplineId }
+  | { kind: "destination"; id: DestinationId | typeof DECIDE }
+  | { kind: "intake"; id: string }
+  | { kind: "priority"; id: PriorityId };
 
 const NEXT: Record<ExploringStep, ExploringStep> = {
   course: "destination", destination: "intake", intake: "priorities", priorities: "result", result: "result",
@@ -40,7 +46,7 @@ function Choice({ label, i, on, icon, muted, preview, onPreview, onPick }: {
       onClick={onPick}
       onIntent={() => onPreview(preview)}
       onLeave={() => onPreview(null)}
-      className="min-h-11 text-[13px] sm:text-sm"
+      className="min-h-11 text-[13px] lg:text-sm"
     />
   );
 }
@@ -50,17 +56,19 @@ type Props = {
   step: ExploringStep;
   onStep: (s: ExploringStep) => void;
   onPreview: (p: Preview | null) => void;
+  onUnlock: () => void;
   onBestFit: () => void;
   onCounsellor: () => void;
 };
 
 /**
  * The exploring funnel: Course → Destination → Intake → Priorities → reveal.
- * Every option previews in the thought panel on hover or focus, and changes it
- * for good when picked. The answers so far sit above the question as pins,
- * each a way back to change it.
+ * Every option previews inside the head on hover or focus, and changes it for
+ * good when picked. Renders two slots — the locked state with the answers so
+ * far, and the current question — which the intro places beside the film on
+ * desktop and stacks in a sheet on phones.
  */
-export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onCounsellor }: Props) {
+export function ExploreFunnel({ profile, step, onStep, onPreview, onUnlock, onBestFit, onCounsellor }: Props) {
   const reduce = useReducedMotion();
   const promptId = useId();
   const [notice, setNotice] = useState("");
@@ -125,14 +133,15 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
 
   const prompt = (text: string, hint?: string) => (
     <>
-      <h2 id="journey-title" ref={focusPrompt} tabIndex={-1} className="text-[clamp(1.75rem,5vw,3rem)] leading-[1.05] text-ivory outline-none">
+      <h2 id="journey-title" ref={focusPrompt} tabIndex={-1} className="text-[clamp(1.5rem,4.8vw,2.4rem)] leading-[1.05] text-ivory outline-none">
         <span id={promptId}>{text}</span>
       </h2>
-      {hint && <p className="mt-1.5 font-hand text-xl leading-tight text-sky/80">{hint}</p>}
+      {hint && <p className="mt-1.5 hidden font-hand text-lg leading-tight text-sky/80 sm:block">{hint}</p>}
     </>
   );
 
   const formula = revealFormula(profile);
+  const cfg = stageById.exploring;
   const pins: { step: ExploringStep; text: string }[] = step === "result" ? [] : [
     ...(profile.discipline ? [{ step: "course" as const, text: disciplines.find((d) => d.id === profile.discipline)!.short }] : []),
     ...(profile.destinations[0] || profile.openDestination
@@ -143,26 +152,40 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
 
   return (
     <>
-      {/* the answers so far — each a way back */}
-      {pins.length > 0 && (
-        <ul aria-label={copy.pins} className="mb-5 flex flex-wrap gap-2">
-          {pins.map((p) => (
-            <li key={p.step}>
-              <button
-                type="button"
-                onClick={() => go(p.step)}
-                aria-label={`${copy.edit}: ${p.text}`}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-void/45 px-3.5 text-xs font-semibold text-ivory ring-1 ring-inset ring-ivory/20 backdrop-blur-sm hover:ring-ivory/50"
-              >
-                {p.text} <Pencil aria-hidden className="size-3 opacity-60" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* the locked state, and the answers so far — each a way back */}
+      <div className="lg:absolute lg:right-[calc(50%+28.125svh+2rem)] lg:top-[24%] lg:w-[15rem]">
+        <motion.div
+          layoutId="stage-exploring"
+          className="flex items-center justify-between gap-3 rounded-[4px] bg-ivory py-2 pl-4 pr-1.5 text-ink shadow-lift lg:flex-col lg:items-start lg:p-4"
+        >
+          <span>
+            <span className="block font-hand text-base leading-none opacity-70">{cfg.arc} · {copy.locked}</span>
+            <span className="block font-serif text-base font-semibold leading-tight lg:text-lg">{cfg.cta}</span>
+          </span>
+          <button type="button" onClick={onUnlock} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold text-ink/70 hover:bg-ink/5 hover:text-ink lg:-ml-3">
+            <X aria-hidden className="size-3.5" /> {copy.change}
+          </button>
+        </motion.div>
+        {pins.length > 0 && (
+          <ul aria-label={copy.pins} className="mt-3 flex flex-wrap gap-2">
+            {pins.map((p) => (
+              <li key={p.step}>
+                <button
+                  type="button"
+                  onClick={() => go(p.step)}
+                  aria-label={`${copy.edit}: ${p.text}`}
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full bg-void/35 px-3.5 text-xs font-semibold text-ivory ring-1 ring-inset ring-ivory/20 hover:ring-ivory/50"
+                >
+                  {p.text} <Pencil aria-hidden className="size-3 opacity-60" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {/* the current question */}
-      <div>
+      <div className="mt-5 lg:absolute lg:left-[calc(50%+28.125svh+2rem)] lg:top-1/2 lg:mt-0 lg:w-[min(27rem,calc(50%-28.125svh-4rem))] lg:-translate-y-1/2">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={step}
@@ -213,7 +236,7 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
             {step === "result" && (
               <>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky/80">{copy.result.eyebrow}</p>
-                <h2 id="journey-title" ref={focusPrompt} tabIndex={-1} className="mt-2 text-[clamp(1.75rem,5vw,3rem)] leading-[1.08] text-ivory outline-none">
+                <h2 id="journey-title" ref={focusPrompt} tabIndex={-1} className="mt-2 text-[clamp(1.6rem,4.6vw,2.6rem)] leading-[1.08] text-ivory outline-none">
                   {formula.map((part, i) => (
                     <span key={i}>
                       {i > 0 && <span className="text-coral"> + </span>}
@@ -225,7 +248,7 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
                   {copy.result.lede}
                   {formula.some((p) => p.suggested) && <> <span className="text-coral">*</span> {copy.result.suggested}.</>}
                 </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
                   <Button type="button" variant="coral" magnetic arrow onClick={onBestFit}>{copy.result.primary}</Button>
                   <Button type="button" variant="secondary" onClick={onCounsellor}>{copy.result.secondary}</Button>
                 </div>

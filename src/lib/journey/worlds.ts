@@ -4,7 +4,7 @@ import { destinations } from "@/data/journey/destinations";
 import { applicationDocuments } from "@/data/journey/requirements";
 import { worldCopy as w } from "@/data/journey/worlds";
 import { recommendDirections } from "./explore";
-import type { ArtSpec, DestinationId, DisciplineId, ExploringStep, MotionProfile, PriorityId, SceneItem, Stage, UserProfile } from "./types";
+import type { ArtSpec, DestinationId, DisciplineId, MotionProfile, PriorityId, SceneItem, Stage, UserProfile } from "./types";
 
 /**
  * What the inside of the head shows. A world is a backdrop plus a handful of
@@ -200,32 +200,4 @@ export function resultWorld(p: UserProfile): World {
     items.push(thing(`r-pr-${id}`, { kind: "sticker", label: o.short, tone: TONES[n] }, 72, 24 + n * 26, [-3, 2, -2][n], { still: true }));
   });
   return { key: "result", backdrop: { kind: "country", destination: place }, motion: "settle", items };
-}
-
-/** What is being hovered or focused, so the thought panel can preview it before it is chosen. */
-export type Preview =
-  | { kind: "discipline"; id: DisciplineId }
-  | { kind: "destination"; id: DestinationId | typeof DECIDE }
-  | { kind: "intake"; id: string }
-  | { kind: "priority"; id: PriorityId };
-
-/**
- * The world for an exploring step: a hovered option previews; otherwise the
- * current answer holds; before any answer, the possibility overload.
- */
-export function exploringWorld(step: ExploringStep, preview: Preview | null, p: UserProfile): World {
-  switch (step) {
-    case "course": {
-      const id = preview?.kind === "discipline" ? preview.id : p.discipline;
-      return id ? disciplineWorld(id) : stageWorld("exploring");
-    }
-    case "destination": {
-      const id = preview?.kind === "destination" ? preview.id : p.destinations[0] ?? (p.openDestination ? DECIDE : null);
-      if (id) return destinationWorld(id);
-      return p.discipline ? disciplineWorld(p.discipline) : stageWorld("exploring");
-    }
-    case "intake": return intakeWorld(preview?.kind === "intake" ? preview.id : p.intake);
-    case "priorities": return prioritiesWorld(p.priorities, preview?.kind === "priority" ? preview.id : null);
-    case "result": return resultWorld(p);
-  }
 }

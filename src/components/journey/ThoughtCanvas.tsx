@@ -1,6 +1,7 @@
 "use client";
 import { AnimatePresence, motion, useTransform, type MotionValue, type Transition } from "framer-motion";
 import { useLayoutEffect, useRef, useState } from "react";
+import { HEAD_OPENING } from "@/data/journey/assets";
 import type { MotionProfile, Point, SceneItem } from "@/lib/journey/types";
 import { ThoughtArt } from "./ThoughtArt";
 
@@ -24,7 +25,6 @@ function seed(id: string) {
 }
 
 type Size = { w: number; h: number };
-const CENTRE: Point = { x: 50, y: 50 };
 
 function Thought({
   item, size, lg, profile, index, mx, my, origin,
@@ -77,10 +77,10 @@ function Thought({
  * the same information as text.
  */
 export function ThoughtCanvas({
-  items, lg, profile, mx, my, origin = CENTRE,
+  items, lg, profile, mx, my, origin = HEAD_OPENING,
 }: {
   items: SceneItem[]; lg: boolean; profile: MotionProfile; mx: MotionValue<number>; my: MotionValue<number>;
-  /** Where thoughts are born and return to, in percent of the canvas. */
+  /** Where thoughts are born and return to, in percent of the canvas. Defaults to the drawn head's opening. */
   origin?: Point;
 }) {
   const ref = useRef<HTMLDivElement>(null);
