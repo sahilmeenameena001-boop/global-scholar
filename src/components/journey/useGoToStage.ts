@@ -19,6 +19,7 @@ export function useGoToStage(from: Stage | null) {
   const go = useCallback((next: Stage, source: string) => {
     const current = journey.get().profile;
     if (!current.journeyStage) track("journey_started", { ...profileMeta(current, next), source });
+    track("journey_selected", { ...profileMeta(current, next), from, source });
     track("journey_stage_selected", { ...profileMeta(current, next), from, source });
     journey.setStage(next);
     router.push(stageHref(next));

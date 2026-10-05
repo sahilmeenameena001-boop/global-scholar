@@ -8,36 +8,56 @@ import type { JourneyState, Stage, UserProfile } from "./types";
  * `useSyncExternalStore`. Components never touch storage; they call the
  * actions below, and the store hands each new state to the configured
  * persistence adapter.
+ *
+ * Saved progress is loaded before anything reads or writes it — not only when
+ * a component subscribes — so an action fired from a page that never rendered
+ * the journey (the home film's state cards) builds on the student's saved
+ * answers instead of overwriting them with an empty profile.
  */
+
+type Op = (s: JourneyState) => JourneyState;
 
 let state: JourneyState = initialJourney;
 let persistence: JourneyPersistence = localJourneyPersistence;
 let loaded = false;
 /** True once the saved journey (if any) has been read. */
 let ready = false;
+/** Changes made while an async load was still in flight; replayed on top of the saved copy. */
+const queued: Op[] = [];
 const listeners = new Set<() => void>();
 
 const emit = () => listeners.forEach((l) => l());
+const save = () => void Promise.resolve(persistence.save(state)).catch(() => {});
 
 function hydrate(saved: JourneyState | null) {
-  // a write made before an async load resolved wins over the stale saved copy
-  if (saved && state.updatedAt === null) state = saved;
+  if (saved) state = saved;
+  const replay = queued.splice(0);
+  for (const op of replay) state = op(state);
   ready = true;
+  if (replay.length) { state = { ...state, updatedAt: Date.now() }; save(); }
   emit();
 }
 
 function load() {
   if (loaded || typeof window === "undefined") return;
   loaded = true;
-  const result = persistence.load();
+  let result: ReturnType<JourneyPersistence["load"]>;
+  try { result = persistence.load(); } catch { result = null; }
   if (result instanceof Promise) result.then(hydrate, () => hydrate(null));
   else hydrate(result);
 }
 
-function commit(next: JourneyState) {
-  state = { ...next, updatedAt: Date.now() };
+/**
+ * Apply a change. Before the saved journey has arrived (an async adapter),
+ * the change is shown at once but held back from storage, then replayed on
+ * the saved copy — so an early tap can never erase what was saved.
+ */
+function commit(op: Op) {
+  load();
+  state = { ...op(state), updatedAt: Date.now() };
+  if (ready) save();
+  else queued.push(op);
   emit();
-  void Promise.resolve(persistence.save(state)).catch(() => {});
 }
 
 /** Swap the storage backend. Call once, before the journey mounts. */
@@ -53,23 +73,29 @@ const subscribe = (cb: () => void) => {
   return () => { listeners.delete(cb); };
 };
 
+/** Render-safe read for `useSyncExternalStore`; never triggers a load itself. */
+const snapshot = () => state;
+
 export const journey = {
-  get: () => state,
+  /** The current journey, loading the saved copy first. For event handlers, not render. */
+  get: () => { load(); return state; },
 
   setStage(stage: Stage) {
-    commit({ ...state, profile: { ...state.profile, journeyStage: stage } });
+    commit((s) => ({ ...s, profile: { ...s.profile, journeyStage: stage } }));
   },
 
   setStep(stage: Stage, step: string) {
-    if (state.steps[stage] === step) return;
-    commit({ ...state, steps: { ...state.steps, [stage]: step } });
+    if (journey.get().steps[stage] === step) return;
+    commit((s) => ({ ...s, steps: { ...s.steps, [stage]: step } }));
   },
 
   patch(partial: Partial<UserProfile>) {
-    commit({ ...state, profile: { ...state.profile, ...partial } });
+    commit((s) => ({ ...s, profile: { ...s.profile, ...partial } }));
   },
 
   reset() {
+    load();
+    queued.length = 0;
     state = { ...initialJourney, updatedAt: Date.now() };
     emit();
     void Promise.resolve(persistence.clear()).catch(() => {});
@@ -84,7 +110,7 @@ export const journey = {
 
 /** The current journey, re-rendering on change. The server and first client pass see the empty state. */
 export function useJourney() {
-  return useSyncExternalStore(subscribe, journey.get, () => initialJourney);
+  return useSyncExternalStore(subscribe, snapshot, () => initialJourney);
 }
 
 /**

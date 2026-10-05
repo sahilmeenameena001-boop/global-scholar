@@ -1,6 +1,9 @@
 "use client";
+import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { journeyIntro, stages } from "@/data/journey/config";
+import { homeCopy } from "@/data/journey/home";
+import { track } from "@/lib/journey/analytics";
 import type { Stage } from "@/lib/journey/types";
 import { stageWorld } from "@/lib/journey/worlds";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -11,6 +14,8 @@ import { useGoToStage } from "./useGoToStage";
 const { video: film } = journeyIntro;
 const TONES = ["ivory", "sky", "ivory", "coral"] as const;
 const TILTS = [-3, 2.5, -1.5, 3];
+/** How long the pointer must rest on a card before the head changes, so crossing cards doesn't flicker. */
+const HOVER_INTENT_MS = 120;
 
 /**
  * The film is a 9:16 frame at full height. Phones are narrower than that, so
@@ -39,7 +44,10 @@ const BESIDE = [
  * Tap anywhere (or "Skip intro") to jump to the open head. Under reduced
  * motion, or if the film cannot play, the open frame shows as a still.
  */
-export function VideoIntro() {
+export function VideoIntro({ onBack }: {
+  /** Shown to returning students who reopened the film: back to their dashboard. */
+  onBack?: () => void;
+}) {
   const reduce = useReducedMotion();
   const ref = useRef<HTMLVideoElement>(null);
   const { go, warm } = useGoToStage(null);
@@ -48,6 +56,21 @@ export function VideoIntro() {
   const [still, setStill] = useState(false);
   const [hovered, setHovered] = useState<Stage | null>(null);
   const focusFirst = useRef(false);
+  const intent = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    track("hero_view", { returning: !!onBack });
+    return () => window.clearTimeout(intent.current);
+  }, [onBack]);
+
+  const hoverStart = (s: Stage) => {
+    window.clearTimeout(intent.current);
+    intent.current = window.setTimeout(() => { setHovered(s); track("journey_hover", { journeyStage: s }); }, HOVER_INTENT_MS);
+  };
+  const hoverEnd = (s: Stage) => {
+    window.clearTimeout(intent.current);
+    setHovered((h) => (h === s ? null : h));
+  };
 
   const revealed = open || reduce;
   const showStill = still || reduce;
@@ -83,6 +106,13 @@ export function VideoIntro() {
       className="relative isolate h-[100svh] overflow-hidden bg-matte"
     >
       <h1 id="intro-title" className="sr-only">{journeyIntro.title}</h1>
+
+      {onBack && revealed && (
+        <button type="button" onClick={onBack}
+          className="absolute right-4 top-24 z-20 inline-flex min-h-11 items-center gap-2 rounded-full bg-void/60 px-4 text-sm font-semibold text-ivory ring-1 ring-inset ring-white/20 backdrop-blur-sm hover:ring-white/40 sm:right-8">
+          <ArrowLeft aria-hidden className="size-4" /> {homeCopy.back}
+        </button>
+      )}
 
       {!revealed && (
         <button
@@ -138,8 +168,8 @@ export function VideoIntro() {
                 tilt={TILTS[i]}
                 index={i * 3}
                 onClick={() => go(s.id, "home-intro")}
-                onIntent={() => { setHovered(s.id); warm(s.id); }}
-                onLeave={() => setHovered((h) => (h === s.id ? null : h))}
+                onIntent={() => { hoverStart(s.id); warm(s.id); }}
+                onLeave={() => hoverEnd(s.id)}
                 className="w-full lg:w-[13.5rem]"
               />
             </li>

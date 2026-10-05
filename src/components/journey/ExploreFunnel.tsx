@@ -1,5 +1,5 @@
 "use client";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { ArrowLeft, Pencil, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
@@ -7,14 +7,14 @@ import {
 } from "@/data/journey/config";
 import { destinations } from "@/data/journey/destinations";
 import { profileMeta, track } from "@/lib/journey/analytics";
-import { revealFormula } from "@/lib/journey/explore";
+import { explorationSentence, revealFormula } from "@/lib/journey/explore";
 import { journey } from "@/lib/journey/store";
 import type { DestinationId, DisciplineId, ExploringStep, PriorityId, UserProfile } from "@/lib/journey/types";
 import type { Preview } from "@/lib/journey/worlds";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { Button } from "../ui/Button";
 import { DemoBadge } from "../ui/SectionHeading";
-import { FloatingCTA } from "./FloatingCTA";
+import { Choice } from "./Choice";
 
 const NEXT: Record<ExploringStep, ExploringStep> = {
   course: "destination", destination: "intake", intake: "priorities", priorities: "result", result: "result",
@@ -22,29 +22,6 @@ const NEXT: Record<ExploringStep, ExploringStep> = {
 const PREV: Record<ExploringStep, ExploringStep | null> = {
   course: null, destination: "course", intake: "destination", priorities: "intake", result: "priorities",
 };
-const TILTS = [-2.5, 1.5, -1, 2.5, -1.8, 1, -0.6, 2];
-
-/** One option: previews inside the head on hover or focus, picks on click. */
-function Choice({ label, i, on, icon, muted, preview, onPreview, onPick }: {
-  label: string; i: number; on: boolean; icon?: string; muted?: boolean;
-  preview: Preview; onPreview: (p: Preview | null) => void; onPick: () => void;
-}) {
-  return (
-    <FloatingCTA
-      label={label}
-      icon={icon}
-      selected={on}
-      muted={muted}
-      tilt={TILTS[i % TILTS.length]}
-      index={i}
-      onClick={onPick}
-      onIntent={() => onPreview(preview)}
-      onLeave={() => onPreview(null)}
-      className="min-h-11 text-[13px] sm:text-sm"
-    />
-  );
-}
-
 type Props = {
   profile: UserProfile;
   step: ExploringStep;
@@ -120,6 +97,7 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
   const revealWorld = () => {
     if (!journey.get().profile.priorities.length) { setNotice(copy.pickOne); return; }
     track("exploration_completed", meta());
+    track("journey_completed", meta());
     go("result");
   };
 
@@ -163,12 +141,12 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
 
       {/* the current question */}
       <div>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
+        {/* the new step mounts at once and fades in; nothing waits on an exit animation, so the
+            question can never lag behind the URL (exit animations stall in background tabs) */}
+        <motion.div
             key={step}
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
             {step === "course" && (
@@ -221,8 +199,8 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
                     </span>
                   ))}
                 </h2>
-                <p className="mt-2 text-sm text-ivory/75">
-                  {copy.result.lede}
+                <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-ivory/85">
+                  {explorationSentence(profile)}
                   {formula.some((p) => p.suggested) && <> <span className="text-coral">*</span> {copy.result.suggested}.</>}
                 </p>
                 <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -245,7 +223,6 @@ export function ExploreFunnel({ profile, step, onStep, onPreview, onBestFit, onC
               </button>
             )}
           </motion.div>
-        </AnimatePresence>
       </div>
     </>
   );

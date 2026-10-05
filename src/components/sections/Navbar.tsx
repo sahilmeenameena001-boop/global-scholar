@@ -4,7 +4,10 @@ import { Globe2, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { navByLifecycle } from "@/data/journey/navigation";
 import { navLinks } from "@/data/nav";
+import { lifecycleOf } from "@/lib/journey/lifecycle";
+import { useJourney } from "@/lib/journey/store";
 import { Button } from "../ui/Button";
 
 export function Logo({ light }: { light?: boolean }) {
@@ -25,8 +28,12 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const { profile } = useJourney();
+  const stage = lifecycleOf(profile);
+  // one navbar for every stage: the site's pages before a student picks a state, their journey after
+  const links: { label: string; href: string; index?: string }[] = stage === "anonymous" ? navLinks : navByLifecycle[stage];
   // the home film is a single question: only the logo stays in the header
-  const bare = pathname === "/";
+  const bare = pathname === "/" && stage === "anonymous";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -48,7 +55,7 @@ export function Navbar() {
         <Logo />
         {!bare && <>
         <ul className="hidden items-center gap-8 xl:flex">
-          {navLinks.map((l) => {
+          {links.map((l) => {
             const on = pathname === l.href;
             return (
               <li key={l.href}>
@@ -75,13 +82,13 @@ export function Navbar() {
           <motion.div id="mobile-menu" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden border-t border-white/10 bg-void/95 backdrop-blur-xl xl:hidden">
             <ul className="space-y-1 px-5 py-4">
-              {navLinks.map((l) => {
+              {links.map((l) => {
                 const on = pathname === l.href;
                 return (
                   <li key={l.href}>
                     <Link href={l.href} onClick={() => setOpen(false)} aria-current={on ? "page" : undefined}
                       className={`flex min-h-12 items-center gap-3 rounded-xl border-l-2 px-3 py-3 text-base font-medium transition-colors ${on ? "border-royal-lit bg-white/[0.06] text-ivory" : "border-transparent text-mist hover:bg-white/5"}`}>
-                      <span aria-hidden className="font-serif text-xs tabular-nums text-royal-lit">{l.index}</span>
+                      {l.index && <span aria-hidden className="font-serif text-xs tabular-nums text-royal-lit">{l.index}</span>}
                       {l.label}
                     </Link>
                   </li>

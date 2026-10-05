@@ -12,7 +12,12 @@ import { Input, Select, SuccessState } from "./Field";
  * `context` names what the enquiry is about — the scholarship a student clicked,
  * say — and travels with the lead so whoever picks it up knows why they called.
  */
-export function LeadForm({ compact, context }: { compact?: boolean; context?: string }) {
+export function LeadForm({ compact, context, onSuccess }: {
+  compact?: boolean;
+  context?: string;
+  /** Called once the enquiry is accepted, e.g. to record that a plan was saved. */
+  onSuccess?: () => void;
+}) {
   const [v, setV] = useState<Lead>(() => ({ ...emptyLead, context: context ?? "" }));
   const [errors, setErrors] = useState<LeadErrors>({});
   const [failure, setFailure] = useState<string | null>(null);
@@ -46,6 +51,7 @@ export function LeadForm({ compact, context }: { compact?: boolean; context?: st
 
       if (res.ok && data.ok) {
         setDone(true);
+        onSuccess?.();
       } else if (data.errors) {
         setErrors(data.errors);
       } else {
