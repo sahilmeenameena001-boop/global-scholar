@@ -1,13 +1,14 @@
 import { VideoIntro } from "@/components/journey/VideoIntro";
 import { BoardingPass } from "@/components/sections/BoardingPass";
+import { Destinations } from "@/components/sections/Destinations";
 import { Explore } from "@/components/sections/Explore";
 import { isStage } from "@/lib/journey/types";
 
 /**
  * Home opens on a single question: "What's on your mind?" The film is the
  * hero — it opens the head, and all four answers run right there, inside the
- * same head. Below it, the site continues as before: the chapter index and
- * the boarding-pass call to action.
+ * same head. Below it, the site continues: the chapter index, the countries
+ * sketchbook, and the boarding-pass call to action.
  * `?state=<stage>` (optionally `&step=<step>`) skips the film and opens that
  * state straight away — links back into a state, and the old
  * `/journey/<stage>` addresses, use it.
@@ -27,6 +28,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
       <VideoIntro key={`${state ?? "intro"}-${step ?? ""}`} initialState={state} initialStep={step} />
       {/* The index: one card per chapter, each its own route */}
       <Explore />
+      {/* The countries sketchbook: five drawn destinations, deck or grid */}
+      <Destinations />
       {/* Climax CTA */}
       <BoardingPass />
     </>
