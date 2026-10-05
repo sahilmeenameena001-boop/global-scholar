@@ -39,7 +39,7 @@ export function BoardingPass() {
               <text x="390" y="40" fontSize="8" fill="#a9b8d4" textAnchor="end">CAMPUS</text>
             </svg>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Button href="/universities" variant="coral" arrow>Start My Study-Abroad Journey</Button>
+              <Button href="/journey" variant="coral" arrow>Start My Study-Abroad Journey</Button>
               <Button href={BOOK_HREF} variant="secondary">Talk to a counsellor</Button>
             </div>
           </div>

@@ -15,6 +15,8 @@
   --color-coral: #f06b5d;
   --color-sky: #ddebff;
   --color-ivory: #f7f4ec;
+  /* Backdrop sampled from the home-page film, so the frame edges disappear into it */
+  --color-matte: #721019;
   --color-ink: #152033;
 
   /* ── Text on dark ──────────────────────────────────────── */
@@ -116,3 +118,16 @@ h1, h2, h3 { font-family: var(--font-serif); letter-spacing: -0.03em; }
 
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @keyframes cue { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(1000%); } }
+
+/* ── Journey: idle life of a thought ─────────────────────── */
+/* Amplitudes come from per-object custom properties set in ThoughtCanvas; the
+   reduced-motion block above already collapses these to a single still frame. */
+@keyframes thought-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  33% { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--dr)); }
+  66% { transform: translate3d(calc(var(--dx) * -0.6), calc(var(--dy) * 0.5), 0) rotate(calc(var(--dr) * -1)); }
+}
+@keyframes thought-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}

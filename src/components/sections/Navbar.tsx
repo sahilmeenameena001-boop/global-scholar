@@ -25,6 +25,8 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  // the home film is a single question: only the logo stays in the header
+  const bare = pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -44,6 +46,7 @@ export function Navbar() {
     <header className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${scrolled || open ? "bg-void/70 shadow-[0_1px_0_rgba(255,255,255,0.07)] backdrop-blur-xl" : "bg-transparent"}`}>
       <nav aria-label="Main" className={`mx-auto flex max-w-7xl items-center justify-between px-5 transition-all duration-500 sm:px-8 ${scrolled ? "py-3" : "py-6"}`}>
         <Logo />
+        {!bare && <>
         <ul className="hidden items-center gap-8 xl:flex">
           {navLinks.map((l) => {
             const on = pathname === l.href;
@@ -65,9 +68,10 @@ export function Navbar() {
           className="grid size-11 cursor-pointer place-items-center rounded-full text-ivory transition-colors hover:bg-white/10 xl:hidden">
           {open ? <X aria-hidden /> : <Menu aria-hidden />}
         </button>
+        </>}
       </nav>
       <AnimatePresence>
-        {open && (
+        {open && !bare && (
           <motion.div id="mobile-menu" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className="overflow-hidden border-t border-white/10 bg-void/95 backdrop-blur-xl xl:hidden">
             <ul className="space-y-1 px-5 py-4">

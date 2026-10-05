@@ -18,7 +18,7 @@ export function ChapterRail() {
   const { scrollYProgress } = useScroll();
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 26, restDelta: 0.001 });
 
-  if (!fine) return null;
+  if (!fine || pathname === "/") return null;
 
   return (
     <nav aria-label="Chapters" className="fixed right-6 top-1/2 z-40 hidden -translate-y-1/2 2xl:block">
