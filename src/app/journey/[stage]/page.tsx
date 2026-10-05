@@ -16,12 +16,12 @@ export async function generateMetadata({ params }: { params: Promise<{ stage: st
   return { title: cfg.cta, description: cfg.lede };
 }
 
-/**
- * The stage itself is rendered by the journey layout, which keeps the head
- * mounted across stages. Exploring runs inside the home-page film instead.
- */
-export default async function Page({ params }: { params: Promise<{ stage: string }> }) {
+/** Every state runs inside the home film's head now; these addresses open it there, keeping any step. */
+export default async function Page({ params, searchParams }: {
+  params: Promise<{ stage: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { stage } = await params;
-  if (stage === "exploring") redirect("/?explore=1");
-  return null;
+  const { step } = await searchParams;
+  redirect(`/?state=${stage}${typeof step === "string" ? `&step=${encodeURIComponent(step)}` : ""}`);
 }

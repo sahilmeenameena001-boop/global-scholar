@@ -3,6 +3,8 @@ import { AnimatePresence, motion, useMotionValue } from "framer-motion";
 import { destinationById } from "@/data/journey/destinations";
 import type { Backdrop, World } from "@/lib/journey/worlds";
 import { CountryArt } from "../ui/CountryArt";
+import { CrossfadeVideo } from "./media/CrossfadeVideo";
+import { useHeadMedia } from "./media/HeadMediaProvider";
 import { ThoughtCanvas } from "./ThoughtCanvas";
 
 /**
@@ -56,29 +58,37 @@ function BackdropLayer({ b }: { b: Backdrop }) {
 }
 
 /**
- * The inside of the head. Hidden while the film's own collage is on show;
- * when the student hovers or answers, it covers the opening with that
- * choice's world — backdrop cross-fading, objects spilling out from the middle.
+ * The inside of the head. On the home film it sits over the head's opening,
+ * hidden while the film's own collage is on show; on a stage page it fills a
+ * torn-paper thought panel. Either way it shows the world for whatever is
+ * hovered or chosen — backdrop cross-fading, objects spilling out from the middle.
  * Decorative: every choice it shows is also named in text beside it.
  */
-export function HeadWindow({ world }: { world: World | null }) {
+export function HeadWindow({ world, fill = false }: {
+  world: World | null;
+  /** Fill the parent (a standalone thought panel) instead of sitting in the film's head slot. */
+  fill?: boolean;
+}) {
   const still = useMotionValue(0);
+  const media = useHeadMedia();
+  const set = world ? media[world.key] : undefined;
+  const inside = world?.items.filter((i) => !i.overflow) ?? [];
+  const outside = world?.items.filter((i) => i.overflow) ?? [];
   return (
     <AnimatePresence>
       {world && (
         <motion.div
           key="window"
           aria-hidden
-          className="absolute overflow-hidden"
-          style={{
-            top: `${HEAD_SLOT.top}%`, height: `${HEAD_SLOT.height}%`, left: `${HEAD_SLOT.left}%`, right: `${HEAD_SLOT.right}%`,
-            clipPath: TORN,
-          }}
+          className="absolute"
+          style={fill ? { inset: 0 } : { top: `${HEAD_SLOT.top}%`, height: `${HEAD_SLOT.height}%`, left: `${HEAD_SLOT.left}%`, right: `${HEAD_SLOT.right}%` }}
           initial={{ opacity: 0, scaleY: 0.55 }}
           animate={{ opacity: 1, scaleY: 1 }}
           exit={{ opacity: 0, scaleY: 0.55 }}
           transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
         >
+        {/* everything inside the head is clipped to the torn opening */}
+        <div className="absolute inset-0 overflow-hidden" style={{ clipPath: TORN }}>
           <AnimatePresence initial={false}>
             <motion.div
               key={backdropKey(world.backdrop)}
@@ -91,10 +101,29 @@ export function HeadWindow({ world }: { world: World | null }) {
               <BackdropLayer b={world.backdrop} />
             </motion.div>
           </AnimatePresence>
+          <ThoughtCanvas items={inside} lg={false} profile={world.motion} mx={still} my={still} origin={{ x: 50, y: 50 }} />
+          {/* produced footage for this state, when it has been dropped in; the drawn world stays underneath as fallback */}
+          {set && <CrossfadeVideo mediaKey={world.key} set={set} />}
           <div className="grain absolute inset-0 shadow-[inset_0_14px_26px_rgba(4,7,13,0.55),inset_0_-14px_26px_rgba(4,7,13,0.55)]" />
-          <ThoughtCanvas items={world.items} lg={false} profile={world.motion} mx={still} my={still} origin={{ x: 50, y: 50 }} />
+        </div>
+        {/* the few objects allowed to break out of the head */}
+        {outside.length > 0 && !set && (
+          <ThoughtCanvas items={outside} lg={false} profile={world.motion} mx={still} my={still} origin={{ x: 50, y: 50 }} />
+        )}
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/**
+ * A standalone thought: the head's inside, torn out and pinned to a stage
+ * page. Previews whatever the student hovers or picks.
+ */
+export function ThoughtPanel({ world, className = "" }: { world: World; className?: string }) {
+  return (
+    <div aria-hidden className={`relative aspect-[2/1] w-full drop-shadow-[0_24px_40px_rgba(4,7,13,0.65)] ${className}`}>
+      <HeadWindow world={world} fill />
+    </div>
   );
 }

@@ -7,8 +7,8 @@ export const worldCopy = {
   overload: ["What should I study?", "UK or Canada??", "47 tabs open", "Can I afford this?", "Is a gap year a plan?"],
   scholarshipQ: "Scholarships?",
   decide: "Let’s compare for you",
-  shortlist: { tabs: ["Rankings 2027", "Fees compared"], stamp: "Shortlist" },
-  applying: { ready: "2/6 documents ready", deadline: "days left" },
+  shortlist: { tabs: ["Rankings 2027", "Compare: fees"], stamp: "Shortlist", fees: "£ $ € fees?" },
+  applying: { ready: "2/6 documents ready", deadline: "days left", portal: "Application portal", mail: "✉ Application received", checklist: "SOP ✓  CV ☐  LOR ☐" },
   offer: { letter: "Offer of admission", visa: "Visa" },
   open: "Open",
 };

@@ -1,22 +1,25 @@
 "use client";
 import { AnimatePresence, LayoutGroup, motion } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { DECIDE, exploringCopy, journeyIntro, stages } from "@/data/journey/config";
+import { exploringCopy, journeyIntro, stages } from "@/data/journey/config";
+import { offerCopy } from "@/data/journey/offer";
 import { profileMeta, track } from "@/lib/journey/analytics";
+import { applicationsSummary, nextAction, todayISO, uniName } from "@/lib/journey/applying";
 import { explorationSummary } from "@/lib/journey/explore";
+import { firstOpenStep } from "@/lib/journey/lifecycle";
+import { moveSummary } from "@/lib/journey/offer";
+import { evaluateList, shortlistSummary } from "@/lib/journey/shortlist";
 import { journey, useJourney } from "@/lib/journey/store";
-import type { ExploringStep, Stage } from "@/lib/journey/types";
-import {
-  destinationWorld, disciplineWorld, intakeWorld, prioritiesWorld, resultWorld, stageWorld, type World,
-} from "@/lib/journey/worlds";
+import type { Application, ExploringStep, Stage } from "@/lib/journey/types";
+import { applyWorld, exploringWorld, offerWorld, shortlistWorld, stageWorld, type Preview, type World } from "@/lib/journey/worlds";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { LeadForm } from "../ui/LeadForm";
 import { Modal } from "../ui/Modal";
-import { ExploreFunnel, type Preview } from "./ExploreFunnel";
+import { ExploreFunnel } from "./ExploreFunnel";
 import { FloatingCTA } from "./FloatingCTA";
 import { HeadWindow } from "./HeadWindow";
-import { useGoToStage } from "./useGoToStage";
+import { InHeadStage } from "./InHeadStage";
 
 const { video: film } = journeyIntro;
 const TONES = ["ivory", "sky", "ivory", "coral"] as const;
@@ -51,34 +54,40 @@ const centreOrigin = () => {
   return (vw / 2 - left) / W;
 };
 
+/** Where a state starts when it's picked. Exploring always opens on its first question, as it always has. */
+const startStep = (s: Stage) => (s === "exploring" ? "course" : firstOpenStep(s, journey.get().profile));
+
 /**
  * Home: a single question. The film opens the head; once it is fully open the
- * four states appear. Hovering one fills the head with that state's world
- * (Exploring: possibility overload) and reveals its call to action. Clicking
- * Exploring locks it in place — the other three fade — and the funnel runs
- * here, inside the same head: every hover previews, every pick reshapes it,
- * until the answers resolve into one personalised world. The other states lead
- * to their own pages.
+ * four states appear. Hovering one fills the head with that state's world and
+ * reveals its call to action. Clicking any of them locks it in place — the
+ * other three fade — and that state's questions run here, inside the same
+ * head: every hover previews, every answer reshapes it.
+ *
+ * `?state=<stage>` (with an optional `&step=`) opens straight into a state,
+ * skipping the film; the old `/journey/<stage>` links redirect here.
  *
  * Tap anywhere (or "Skip intro") to jump to the open head. Under reduced
  * motion, or if the film cannot play, the open frame shows as a still.
  */
-export function VideoIntro({ startExploring = false }: { startExploring?: boolean }) {
+export function VideoIntro({ initialState = null, initialStep = null }: { initialState?: Stage | null; initialStep?: string | null }) {
   const reduce = useReducedMotion();
   const lg = useMediaQuery("(min-width: 1024px)");
   const originX = useSyncExternalStore(sizeSub, centreOrigin, () => 0.5);
   const ref = useRef<HTMLVideoElement>(null);
   const { profile } = useJourney();
-  const { go, warm } = useGoToStage(null);
 
-  const [open, setOpen] = useState(startExploring);
-  const [still, setStill] = useState(startExploring);
-  const [locked, setLocked] = useState(startExploring);
+  const [open, setOpen] = useState(!!initialState);
+  const [still, setStill] = useState(!!initialState);
+  const [locked, setLocked] = useState<Stage | null>(initialState);
   const [hovered, setHovered] = useState<Stage | null>(null);
-  const [step, setStep] = useState<ExploringStep>("course");
+  const [step, setStepState] = useState<string>(() => initialStep ?? (initialState ? startStep(initialState) : "course"));
   const [preview, setPreview] = useState<Preview | null>(null);
-  const [talk, setTalk] = useState(false);
+  const [compareIds, setCompareIds] = useState<string[]>([]);
+  const [talk, setTalk] = useState<string | null>(null);
+  const [today] = useState(() => todayISO());
   const focusFirst = useRef(false);
+  const moved = useRef(false);
 
   const revealed = open || reduce;
   const showStill = still || reduce;
@@ -93,53 +102,78 @@ export function VideoIntro({ startExploring = false }: { startExploring?: boolea
 
   useEffect(() => {
     const v = ref.current;
-    if (!v || reduce || startExploring) return;
+    if (!v || reduce || initialState) return;
     const giveUp = () => { setStill(true); setOpen(true); };
     // autoplay can be refused (low-power mode, data saver); never leave the student waiting
     const stall = window.setTimeout(() => { if (v.currentTime === 0) giveUp(); }, film.stallMs);
     v.play()?.catch(giveUp);
     return () => window.clearTimeout(stall);
-  }, [reduce, startExploring]);
+  }, [reduce, initialState]);
 
   const focusOnMount = useCallback((el: HTMLButtonElement | null) => {
     if (el && focusFirst.current) { focusFirst.current = false; el.focus(); }
   }, []);
 
-  const pick = (s: Stage) => {
-    if (s !== "exploring") { go(s, "home-intro"); return; }
+  const setStep = useCallback((s: string) => { moved.current = true; setPreview(null); setStepState(s); }, []);
+  /** After a step change, focus lands on the new prompt so it is announced. */
+  const focusRef = useCallback((el: HTMLHeadingElement | null) => { if (el && moved.current) el.focus(); }, []);
+
+  /** Lock a state inside the head: from a card, or handed on from another state. */
+  const lock = (s: Stage, at?: string, source = "home-intro") => {
     const current = journey.get().profile;
-    if (!current.journeyStage) track("journey_started", { ...profileMeta(current, s), source: "home-intro" });
-    track("journey_stage_selected", { ...profileMeta(current, s), source: "home-intro" });
-    journey.setStage("exploring");
+    if (!current.journeyStage) track("journey_started", { ...profileMeta(current, s), source });
+    track("journey_selected", { ...profileMeta(current, s), from: locked, source });
+    track("journey_stage_selected", { ...profileMeta(current, s), from: locked, source });
+    journey.setStage(s);
     setHovered(null);
-    setStep("course");
-    setLocked(true);
+    setPreview(null);
+    setCompareIds([]);
+    moved.current = !!locked;
+    setStepState(at ?? startStep(s));
+    setLocked(s);
   };
 
-  const unlock = () => { setLocked(false); setPreview(null); };
-  const closeTalk = useCallback(() => setTalk(false), []);
+  const unlock = () => { setLocked(null); setPreview(null); };
+  const closeTalk = useCallback(() => setTalk(null), []);
+  const counsellor = (stage: Stage, source: string) => {
+    track("counsellor_cta_clicked", { ...profileMeta(journey.get().profile, stage), source });
+    setTalk(source);
+  };
+
+  /** Shortlist → applying: one application per shortlisted university (keeping any already tracked), then their statuses. */
+  const planApplications = () => {
+    const p = journey.get().profile;
+    const tracked = new Set(p.applications.map((a) => a.university));
+    const added: Application[] = p.shortlist.filter((id) => !tracked.has(id)).map((id) => ({ university: id, status: "notStarted", pending: [], dates: {} }));
+    journey.patch({ applications: [...p.applications, ...added] });
+    track("shortlist_completed", { ...profileMeta(p, "shortlisting"), universities: p.shortlist });
+    lock("applying", "status", "shortlist-final");
+  };
+
+  const list = useMemo(() => evaluateList(profile.shortlist, profile), [profile]);
+  const action = useMemo(() => nextAction(profile.applications, today), [profile.applications, today]);
 
   /** What the inside of the head shows right now. `null` leaves the film's own collage on show. */
   const world: World | null = useMemo(() => {
     if (!locked) return hovered ? stageWorld(hovered) : null;
-    const p = preview;
-    switch (step) {
-      case "course": {
-        const id = p?.kind === "discipline" ? p.id : profile.discipline;
-        return id ? disciplineWorld(id) : stageWorld("exploring");
-      }
-      case "destination": {
-        const id = p?.kind === "destination" ? p.id : profile.destinations[0] ?? (profile.openDestination ? DECIDE : null);
-        if (id) return destinationWorld(id);
-        return profile.discipline ? disciplineWorld(profile.discipline) : stageWorld("exploring");
-      }
-      case "intake": return intakeWorld(p?.kind === "intake" ? p.id : profile.intake);
-      case "priorities": return prioritiesWorld(profile.priorities, p?.kind === "priority" ? p.id : null);
-      case "result": return resultWorld(profile);
+    switch (locked) {
+      case "exploring": return exploringWorld(step as ExploringStep, preview, profile);
+      case "shortlisting": return shortlistWorld(step as never, preview, profile, list, compareIds);
+      case "applying": return applyWorld(step as never, preview, profile, today, action);
+      case "offer": return offerWorld(step as never, profile, today);
     }
-  }, [locked, hovered, preview, step, profile]);
+  }, [locked, hovered, preview, step, profile, list, compareIds, today, action]);
 
-  const shrink = locked && !lg;
+  const context = useMemo(() => {
+    switch (locked) {
+      case "shortlisting": return shortlistSummary(profile.shortlist);
+      case "applying": return applicationsSummary(profile.applications, today);
+      case "offer": return `Offer: ${profile.offers.map((o) => uniName(o.university)).join(", ") || "none yet"}. ${moveSummary(profile).map((r) => `${r.label} ${r.value}`).join(", ")}`.slice(0, 200);
+      default: return explorationSummary(profile);
+    }
+  }, [locked, profile, today]);
+
+  const shrink = !!locked && !lg;
 
   return (
     <section
@@ -200,8 +234,8 @@ export function VideoIntro({ startExploring = false }: { startExploring?: boolea
           >
             {stages.map((s, i) => (
               <li key={s.id} className={`lg:absolute ${BESIDE[i]}`}>
-                {/* Exploring morphs into the locked card; the other three fade away */}
-                <motion.div layoutId={`stage-${s.id}`} exit={s.id === "exploring" ? undefined : { opacity: 0, scale: 0.9, transition: { duration: 0.25 } }}>
+                {/* the picked card morphs into the locked card; the other three fade away */}
+                <motion.div layoutId={`stage-${s.id}`} exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.25 } }}>
                   <FloatingCTA
                     ref={i === 0 ? focusOnMount : undefined}
                     variant="note"
@@ -212,8 +246,8 @@ export function VideoIntro({ startExploring = false }: { startExploring?: boolea
                     active={hovered === s.id}
                     tilt={TILTS[i]}
                     index={i * 3}
-                    onClick={() => pick(s.id)}
-                    onIntent={() => { setHovered(s.id); if (s.id !== "exploring") warm(s.id); }}
+                    onClick={() => lock(s.id)}
+                    onIntent={() => setHovered(s.id)}
                     onLeave={() => setHovered((h) => (h === s.id ? null : h))}
                     className="w-full lg:w-[13.5rem]"
                   />
@@ -229,27 +263,48 @@ export function VideoIntro({ startExploring = false }: { startExploring?: boolea
             data-lenis-prevent
             className="absolute inset-x-0 bottom-0 max-h-[60svh] overflow-y-auto rounded-t-3xl border-t border-ivory/10 bg-matte/95 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 shadow-lift backdrop-blur-md lg:contents"
           >
-            <ExploreFunnel
-              profile={profile}
-              step={step}
-              onStep={setStep}
-              onPreview={setPreview}
-              onUnlock={unlock}
-              onBestFit={() => {
-                track("stage_cta_clicked", { ...profileMeta(journey.get().profile, "exploring"), cta: "best-fit" });
-                go("shortlisting", "home-explore-result");
-              }}
-              onCounsellor={() => {
-                track("counsellor_cta_clicked", { ...profileMeta(journey.get().profile, "exploring"), source: "home-explore-result" });
-                setTalk(true);
-              }}
-            />
+            {locked === "exploring" ? (
+              <ExploreFunnel
+                profile={profile}
+                step={step as ExploringStep}
+                onStep={setStep}
+                onPreview={setPreview}
+                onUnlock={unlock}
+                onBestFit={() => {
+                  track("stage_cta_clicked", { ...profileMeta(journey.get().profile, "exploring"), cta: "best-fit" });
+                  lock("shortlisting", undefined, "home-explore-result");
+                }}
+                onCounsellor={() => counsellor("exploring", "home-explore-result")}
+              />
+            ) : (
+              <InHeadStage
+                key={locked}
+                stage={locked}
+                step={step}
+                profile={profile}
+                today={today}
+                list={list}
+                action={action}
+                compareIds={compareIds}
+                onCompareIds={setCompareIds}
+                onStep={setStep}
+                onPreview={setPreview}
+                onUnlock={unlock}
+                onCounsellor={(source) => counsellor(locked, source)}
+                onSwitch={(to, at) => lock(to, at, `${locked}-handoff`)}
+                onPlan={planApplications}
+                focusRef={focusRef}
+              />
+            )}
           </div>
         )}
       </LayoutGroup>
 
-      <Modal open={talk} onClose={closeTalk} title={exploringCopy.result.modal} gate>
-        <LeadForm compact context={explorationSummary(profile)} />
+      <Modal open={!!talk} onClose={closeTalk} title={locked === "offer" ? offerCopy.modal : exploringCopy.result.modal} gate>
+        <LeadForm compact context={context} onSuccess={() => {
+          journey.patch({ leadCaptured: true });
+          track("lead_created", { ...profileMeta(journey.get().profile, locked), source: talk ?? "home" });
+        }} />
       </Modal>
     </section>
   );

@@ -7,6 +7,12 @@ import type { Stage, UserProfile } from "./types";
  */
 
 export type JourneyEvent =
+  | "hero_view"
+  | "journey_hover"
+  | "journey_selected"
+  | "journey_step_view"
+  | "journey_answer"
+  | "journey_completed"
   | "journey_started"
   | "journey_stage_selected"
   | "discipline_selected"
@@ -15,7 +21,10 @@ export type JourneyEvent =
   | "priority_selected"
   | "exploration_completed"
   | "shortlist_generated"
+  | "shortlist_compared"
+  | "shortlist_finalised"
   | "university_saved"
+  | "university_removed"
   | "application_started"
   | "document_completed"
   | "offer_added"
@@ -23,6 +32,14 @@ export type JourneyEvent =
   | "visa_started"
   | "departure_plan_opened"
   | "stage_cta_clicked"
+  | "university_view"
+  | "comparison_started"
+  | "shortlist_completed"
+  | "application_submitted"
+  | "offer_selected"
+  | "visa_completed"
+  | "departure_task_completed"
+  | "lead_created"
   | "counsellor_cta_clicked";
 
 export type EventProps = Record<string, string | number | boolean | string[] | null | undefined>;
@@ -52,8 +69,9 @@ function ensureDefaults() {
 
 export function track(event: JourneyEvent, props: EventProps = {}) {
   ensureDefaults();
+  const payload = { ...props, timestamp: Date.now() };
   for (const sink of sinks) {
-    try { sink(event, props); } catch { /* a failing sink must never break the journey */ }
+    try { sink(event, payload); } catch { /* a failing sink must never break the journey */ }
   }
 }
 

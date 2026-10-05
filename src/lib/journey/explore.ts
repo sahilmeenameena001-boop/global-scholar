@@ -69,3 +69,23 @@ export function revealFormula(p: UserProfile): { text: string; suggested?: boole
 export function explorationSummary(p: UserProfile) {
   return `Exploring: ${revealFormula(p).map((x) => x.text + (x.suggested ? " (suggested)" : "")).join(" + ")}`.slice(0, 200);
 }
+
+const MONTH_NAMES: Record<string, string> = { Jan: "January", Sep: "September", May: "May", Feb: "February", Jul: "July", Oct: "October", Apr: "April" };
+const PLACE: Record<string, string> = { UK: "the UK", USA: "the USA" };
+
+/**
+ * The personalised result in one sentence: "You're exploring Business in the
+ * UK for September 2027, with career opportunities and scholarships as your
+ * priorities." Built only from the student's answers.
+ */
+export function explorationSentence(p: UserProfile) {
+  const d = disciplines.find((x) => x.id === p.discipline);
+  const subject = !d || d.id === "undecided" ? "your options" : d.short;
+  const dest = p.destinations[0] ? destinationById[p.destinations[0]].label : null;
+  const place = dest ? ` in ${PLACE[dest] ?? dest}` : p.openDestination ? ", with us helping you pick a country," : "";
+  const it = intakes.find((o) => o.id === p.intake);
+  const when = !it || it.id === "undecided" ? ", timing still open" : ` for ${it.label.replace(/^(\w{3})/, (m) => MONTH_NAMES[m] ?? m)}`;
+  const pr = p.priorities.map((id) => priorities.find((x) => x.id === id)!.label.toLowerCase());
+  const why = pr.length ? `, with ${pr.length > 1 ? `${pr.slice(0, -1).join(", ")} and ${pr[pr.length - 1]}` : pr[0]} as ${pr.length > 1 ? "your priorities" : "your priority"}` : "";
+  return `You’re exploring ${subject}${place}${when}${why}.`.replace(",,", ",");
+}
