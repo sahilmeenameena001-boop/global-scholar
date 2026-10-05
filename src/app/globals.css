@@ -15,8 +15,9 @@
   --color-coral: #f06b5d;
   --color-sky: #ddebff;
   --color-ivory: #f7f4ec;
-  /* Backdrop sampled from the home-page film, so the frame edges disappear into it */
-  --color-matte: #721019;
+  /* Backdrop behind the home-page film. The film's own background is keyed to
+     this exact colour (see HEADER VIDEO), so its edges disappear into the site's navy. */
+  --color-matte: #070d18;
   --color-ink: #152033;
 
   /* ── Text on dark ──────────────────────────────────────── */
