@@ -42,9 +42,9 @@ export function Journey() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 70%", "end 70%"] });
   const scaleY = useSpring(scrollYProgress, { stiffness: 80, damping: 25 });
   return (
-    <section id="journey" aria-labelledby="journey-title" data-chapter={3} className="relative scroll-mt-24 py-28 md:py-40">
+    <section id="journey" aria-labelledby="route-title" data-chapter={3} className="relative scroll-mt-24 py-28 md:py-40">
       <div className="mx-auto max-w-6xl px-5 sm:px-8">
-        <ChapterHead id="journey-title" index={meta.index} eyebrow={meta.eyebrow} title="Six stages, one counsellor, no guesswork." lede="A clear checklist at every stop along the route, from first assessment to the day you fly." />
+        <ChapterHead id="route-title" index={meta.index} eyebrow={meta.eyebrow} title="Six stages, one counsellor, no guesswork." lede="A clear checklist at every stop along the route, from first assessment to the day you fly." />
         <div ref={ref} className="relative mt-16">
           <div aria-hidden className="absolute bottom-0 left-4 top-0 w-0.5 border-l-2 border-dashed border-white/15 md:left-1/2" />
           <motion.div aria-hidden className="absolute left-4 top-0 h-full w-0.5 origin-top bg-royal md:left-1/2" style={{ scaleY: reduce ? 1 : scaleY }} />
